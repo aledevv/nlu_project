@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 import copy
 
-DEBUG = True
+DEBUG = False
 
 if __name__ == "__main__":
     #Wrtite the code to load the datasets and to run your functions

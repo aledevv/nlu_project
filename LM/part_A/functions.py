@@ -22,7 +22,7 @@ class LM_LSTM(nn.Module):
         
     def forward(self, input_seq):
         emb = self.embedding(input_seq)
-        lstm_out, _  = self.rnn(emb)
+        lstm_out, _  = self.lstm(emb)
         output = self.output(lstm_out).permute(0,2,1)
         return output
 
