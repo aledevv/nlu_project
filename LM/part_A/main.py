@@ -8,7 +8,11 @@ from utils import *
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import copy
+import curses
+import os
+import re
 
+DEVICE = 'cuda'
 DEBUG = False
 
 if __name__ == "__main__":
@@ -35,10 +39,10 @@ if __name__ == "__main__":
     test_loader = DataLoader(test_dataset, batch_size=128, collate_fn=partial(collate_fn, pad_token=lang.word2id["<pad>"]))
     
     # * MODEL SETUP*
-    hid_size = 200 #! MODIFY
+    hid_size = 400 #! MODIFY
     emb_size = 300 #! MODIFY
     
-    lr = 0.0001 # ! MODIFY
+    lr = 0.01 # ! MODIFY
     clip = 5 # Clip the gradient #? MODIFY
     
     vocab_len = len(lang.word2id)
@@ -65,6 +69,7 @@ if __name__ == "__main__":
     pbar = tqdm(range(1,n_epochs))
     #If the PPL is too high try to change the learning rate
     for epoch in pbar:
+        break
         loss = train_loop(train_loader, optimizer, criterion_train, model, clip)    
         if epoch % 1 == 0:
             sampled_epochs.append(epoch)
@@ -82,9 +87,9 @@ if __name__ == "__main__":
             if patience <= 0: # Early stopping with patience
                 break # Not nice but it keeps the code clean
 
-    best_model.to(DEVICE)
-    final_ppl,  _ = eval_loop(test_loader, criterion_eval, best_model)    
-    print('Test ppl: ', final_ppl)
+    #best_model.to(DEVICE)
+    #final_ppl,  _ = eval_loop(test_loader, criterion_eval, best_model)    
+    #print('Test ppl: ', final_ppl)
     
     want_to_save_model(best_model) # to choose whether to save the model
-    
+    save_log_csv(hid_size, emb_size, lr, clip, n_epochs, patience, 0)

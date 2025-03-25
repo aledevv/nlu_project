@@ -1,6 +1,3 @@
-# Add the class of your model only
-# Here is where you define the architecture of your model using pytorch
-
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -8,29 +5,33 @@ import torch.nn.functional as F
 import math
 import numpy as np
 
-DEVICE = 'cuda:0'
+DEVICE = 'cuda'
 
 class LM_LSTM(nn.Module):
     def __init__(self, emb_size, hidden_size, output_size, pad_index=0, out_dropout=0.1,
                  emb_dropout=0.1, n_layers=1):
         super(LM_LSTM, self).__init__()
-        
+        # Token ids to vectors, we will better see this in the next lab
         self.embedding = nn.Embedding(output_size, emb_size, padding_idx=pad_index)
-        self.lstm = nn.LSTM(emb_size, hidden_size, n_layers, bidirectional=True, batch_first=True)
+        # Pytorch's RNN layer: https://pytorch.org/docs/stable/generated/torch.nn.RNN.html
+        self.lstm = nn.LSTM(emb_size, hidden_size, n_layers, bidirectional=False, batch_first=True)
         self.pad_token = pad_index
+        # Linear layer to project the hidden layer to our output space
         self.output = nn.Linear(hidden_size, output_size)
-        
-    def forward(self, input_seq):
-        emb = self.embedding(input_seq)
-        lstm_out, _  = self.lstm(emb)
-        output = self.output(lstm_out).permute(0,2,1)
-        return output
 
+    def forward(self, input_sequence):
+        emb = self.embedding(input_sequence)
+        rnn_out, _  = self.lstm(emb)
+        output = self.output(rnn_out).permute(0,2,1)
+        return output
+    
+    
+import math
 def train_loop(data, optimizer, criterion, model, clip=5):
     model.train()
     loss_array = []
     number_of_tokens = []
-    
+
     for sample in data:
         optimizer.zero_grad() # Zeroing the gradient
         output = model(sample['source'])
@@ -38,10 +39,10 @@ def train_loop(data, optimizer, criterion, model, clip=5):
         loss_array.append(loss.item() * sample["number_tokens"])
         number_of_tokens.append(sample["number_tokens"])
         loss.backward() # Compute the gradient, deleting the computational graph
-        # clip the gradient to avoid exploding gradients
-        torch.nn.utils.clip_grad_norm_(model.parameters(), clip)  
+        # clip the gradient to avoid explosioning gradients
+        torch.nn.utils.clip_grad_norm_(model.parameters(), clip)
         optimizer.step() # Update the weights
-        
+
     return sum(loss_array)/sum(number_of_tokens)
 
 def eval_loop(data, eval_criterion, model):
@@ -56,7 +57,7 @@ def eval_loop(data, eval_criterion, model):
             loss = eval_criterion(output, sample['target'])
             loss_array.append(loss.item())
             number_of_tokens.append(sample["number_tokens"])
-            
+
     ppl = math.exp(sum(loss_array) / sum(number_of_tokens))
     loss_to_return = sum(loss_array) / sum(number_of_tokens)
     return ppl, loss_to_return

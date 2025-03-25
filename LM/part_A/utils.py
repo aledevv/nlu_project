@@ -1,15 +1,32 @@
-# Add functions or classes used for data loading and preprocessing
-import torch
-import torch.utils.data as data
-from functools import partial
-from torch.utils.data import DataLoader
-import matplotlib.pyplot as plt
-from tqdm import tqdm
 import copy
 import curses
 import os
 import re
-from functions import DEVICE
+import csv
+
+DEVICE = 'cuda'
+
+def read_file(path, eos_token="<eos>"):
+    output = []
+    with open(path, "r") as f:
+        for line in f.readlines():
+            output.append(line.strip() + " " + eos_token)
+    return output
+
+# Vocab with tokens to ids
+def get_vocab(corpus, special_tokens=[]):
+    output = {}
+    i = 0
+    for st in special_tokens:
+        output[st] = i
+        i += 1
+    for sentence in corpus:
+        for w in sentence.split():
+            if w not in output:
+                output[w] = i
+                i += 1
+    return output
+
 
 class Lang():
     def __init__(self, corpus, special_tokens=[]):
@@ -17,7 +34,7 @@ class Lang():
         self.id2word = {v:k for k, v in self.word2id.items()}
     def get_vocab(self, corpus, special_tokens=[]):
         output = {}
-        i = 0 
+        i = 0
         for st in special_tokens:
             output[st] = i
             i += 1
@@ -27,7 +44,8 @@ class Lang():
                     output[w] = i
                     i += 1
         return output
-    
+
+import torch
 import torch.utils.data as data
 
 class PennTreeBank (data.Dataset):
@@ -35,12 +53,12 @@ class PennTreeBank (data.Dataset):
     def __init__(self, corpus, lang):
         self.source = []
         self.target = []
-        
+
         for sentence in corpus:
             self.source.append(sentence.split()[0:-1]) # We get from the first token till the second-last token
             self.target.append(sentence.split()[1:]) # We get from the second token till the last token
             # See example in section 6.2
-        
+
         self.source_ids = self.mapping_seq(self.source, lang)
         self.target_ids = self.mapping_seq(self.target, lang)
 
@@ -52,9 +70,9 @@ class PennTreeBank (data.Dataset):
         trg = torch.LongTensor(self.target_ids[idx])
         sample = {'source': src, 'target': trg}
         return sample
-    
+
     # Auxiliary methods
-    
+
     def mapping_seq(self, data, lang): # Map sequences of tokens to corresponding computed in Lang class
         res = []
         for seq in data:
@@ -69,35 +87,19 @@ class PennTreeBank (data.Dataset):
             res.append(tmp_seq)
         return res
 
-# * Data loading functions
-def read_file(path, eos_token="<eos>"):
-    output = []
-    with open(path, "r") as f:
-        for line in f.readlines():
-            output.append(line.strip() + " " + eos_token)
-    return output
 
-# Vocab with tokens to ids
-def get_vocab(corpus, special_tokens=[]):
-    output = {}
-    i = 0 
-    for st in special_tokens:
-        output[st] = i
-        i += 1
-    for sentence in corpus:
-        for w in sentence.split():
-            if w not in output:
-                output[w] = i
-                i += 1
-    return output
-
+from functools import partial
+from torch.utils.data import DataLoader
 
 def collate_fn(data, pad_token):
     def merge(sequences):
+        '''
+        merge from batch * sent_len to batch * max_len
+        '''
         lengths = [len(seq) for seq in sequences]
         max_len = 1 if max(lengths)==0 else max(lengths)
         # Pad token is zero in our case
-        # So we create a matrix full of PAD_TOKEN (i.e. 0) with the shape 
+        # So we create a matrix full of PAD_TOKEN (i.e. 0) with the shape
         # batch_size X maximum length of a sequence
         padded_seqs = torch.LongTensor(len(sequences),max_len).fill_(pad_token)
         for i, seq in enumerate(sequences):
@@ -105,17 +107,17 @@ def collate_fn(data, pad_token):
             padded_seqs[i, :end] = seq # We copy each sequence into the matrix
         padded_seqs = padded_seqs.detach()  # We remove these tensors from the computational graph
         return padded_seqs, lengths
-    
+
     # Sort data by seq lengths
 
-    data.sort(key=lambda x: len(x["source"]), reverse=True) 
+    data.sort(key=lambda x: len(x["source"]), reverse=True)
     new_item = {}
     for key in data[0].keys():
         new_item[key] = [d[key] for d in data]
 
     source, _ = merge(new_item["source"])
     target, lengths = merge(new_item["target"])
-    
+
     new_item["source"] = source.to(DEVICE)
     new_item["target"] = target.to(DEVICE)
     new_item["number_tokens"] = sum(lengths)
@@ -172,4 +174,32 @@ def want_to_save_model(model):
         print(f"Model saved at: {save_path}")
     else:
         print("Model not saved.")
-    
+
+
+# * TO STORE LOG (configuration and performance of each training)
+def save_log_csv(hidden_size=None, emb_size=None, learning_rate=None, clip=None, epochs=0, patience=0, final_ppl=0, log_file='training_log.csv'):
+    # Crea o aggiorna il file CSV
+    fieldnames = ['Hidden Size', 'Embedding Size', 'Learning Rate', 'Gradient Clip', 'Epochs', 'Patience', 'Final PPL']
+
+    # Se il file non esiste, scrivi l'intestazione
+    file_exists = os.path.exists(log_file)
+
+    with open(log_file, mode='a', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+
+        # Scrivi l'intestazione solo se il file è vuoto
+        if not file_exists:
+            writer.writeheader()
+
+        # Scrivi i dati
+        writer.writerow({
+            'Hidden Size': hidden_size,
+            'Embedding Size': emb_size,
+            'Learning Rate': learning_rate,
+            'Gradient Clip': clip,
+            'Epochs': epochs,
+            'Patience': patience,
+            'Final PPL': final_ppl
+        })
+
+    print(f"Log salvato in: {log_file}")
