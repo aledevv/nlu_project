@@ -24,12 +24,12 @@ class LM_LSTM(nn.Module):
         rnn_out, _  = self.lstm(emb)
         output = self.output(rnn_out).permute(0,2,1)
         return output
-    
-    
-import math
+
+
 def train_loop(data, optimizer, criterion, model, clip=5):
     model.train()
     loss_array = []
+    ppls_array = []
     number_of_tokens = []
 
     for sample in data:

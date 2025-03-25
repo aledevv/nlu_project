@@ -1,2 +1,2 @@
-Hidden Size,Embedding Size,Learning Rate,Gradient Clip,Epochs,Patience,Final PPL
-400,300,0.01,5,100,3,0
+Model ID,Hidden Size,Embedding Size,Learning Rate,Gradient Clip,Epochs,Patience,Dev PPL,Final PPL
+1,400,300,1,5,100,0,152.106331290151,144.101848251274

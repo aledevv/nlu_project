@@ -3,6 +3,7 @@ import curses
 import os
 import re
 import csv
+from tabulate import tabulate
 
 DEVICE = 'cuda'
 
@@ -162,44 +163,79 @@ def get_next_model_name(directory):
     existing_numbers = [int(re.search(r"model_(\d+)\.pt", f).group(1)) for f in existing_files]
 
     next_number = max(existing_numbers, default=0) + 1  # Increment highest number
-    return os.path.join(directory, f"model_{next_number}.pt")
+    return os.path.join(directory, f"model_{next_number}.pt"), next_number
         
         
 def want_to_save_model(model):
-    choice = curses.wrapper(menu)  # Run the menu inside curses wrapper
+    #choice = curses.wrapper(menu)  # Run the menu inside curses wrapper
+    choice = ['Yes']
     
     if "Yes" in choice:
-        save_path = get_next_model_name(save_dir)
+        save_path, model_id = get_next_model_name(save_dir)
         torch.save(model.state_dict(), save_path)
         print(f"Model saved at: {save_path}")
     else:
         print("Model not saved.")
-
+    
+    return model_id
+        
 
 # * TO STORE LOG (configuration and performance of each training)
-def save_log_csv(hidden_size=None, emb_size=None, learning_rate=None, clip=None, epochs=0, patience=0, final_ppl=0, log_file='training_log.csv'):
-    # Crea o aggiorna il file CSV
-    fieldnames = ['Hidden Size', 'Embedding Size', 'Learning Rate', 'Gradient Clip', 'Epochs', 'Patience', 'Final PPL']
 
-    # Se il file non esiste, scrivi l'intestazione
+
+def save_log_txt(model_id=0, hidden_size=None, emb_size=None, learning_rate=None, clip=None, epochs=0, patience=0, dev_ppl=0, final_ppl=0, log_file='training_log.txt'):
+    # Definisce i nomi delle colonne
+    fieldnames = ['Model ID', 'Hidden Size', 'Embedding Size', 'Learning Rate', 
+                  'Gradient Clip', 'Epochs', 'Patience', 'Dev PPL', 'Final PPL']
+
+    # Dati da salvare
+    log_entry = [model_id, hidden_size, emb_size, learning_rate, clip, epochs, patience, dev_ppl, final_ppl]
+
+    # Controlla se il file esiste già
     file_exists = os.path.exists(log_file)
 
-    with open(log_file, mode='a', newline='') as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
-
-        # Scrivi l'intestazione solo se il file è vuoto
+    # Se il file non esiste, crea l'intestazione
+    with open(log_file, mode='a') as f:
         if not file_exists:
-            writer.writeheader()
+            f.write(tabulate([fieldnames], tablefmt="grid") + "\n")
 
-        # Scrivi i dati
-        writer.writerow({
-            'Hidden Size': hidden_size,
-            'Embedding Size': emb_size,
-            'Learning Rate': learning_rate,
-            'Gradient Clip': clip,
-            'Epochs': epochs,
-            'Patience': patience,
-            'Final PPL': final_ppl
-        })
+        # Scrive i dati nella tabella
+        f.write(tabulate([log_entry], tablefmt="grid") + "\n")
 
-    print(f"Log salvato in: {log_file}")
+    # Stampa il log a schermo
+    print("\nLog salvato con successo! 📊")
+    print(tabulate([log_entry], headers=fieldnames, tablefmt="grid"))
+
+
+# * FUNCTION TO PLOT TRAINING
+import matplotlib.pyplot as plt
+
+def save_training_plot(losses_train, losses_dev, ppls_dev, filename="training_plot.png"):
+    """
+    Saves the plot showing the evolution of the loss and perplexity during training and eval
+    """
+    epochs = range(1, len(losses_train) + 1)
+
+    fig, ax = plt.subplots(1, 2, figsize=(12, 5))
+
+    # Plot della Training Loss
+    ax[0].plot(epochs, losses_train, marker='o', linestyle='-', label="Training Loss", color='b')
+    ax[0].plot(epochs, losses_dev, marker='x', linestyle='--', label="Validation Loss", color='r')
+    ax[0].set_title("Loss during Training")
+    ax[0].set_xlabel("Epoch")
+    ax[0].set_ylabel("Loss")
+    ax[0].legend()
+    ax[0].grid(True)
+
+    # Plot della Perplexity di Validazione
+    ax[1].plot(epochs, ppls_dev, marker='o', linestyle='-', label="Validation PPL", color='g')
+    ax[1].set_title("Perplexity on Validation Set")
+    ax[1].set_xlabel("Epoch")
+    ax[1].set_ylabel("Perplexity")
+    ax[1].legend()
+    ax[1].grid(True)
+
+    # Salva il plot nel file specificato
+    plt.savefig(filename)
+    plt.close()  # Chiude la figura per liberare memoria
+    print(f"Plot salvato come {filename}")

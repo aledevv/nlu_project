@@ -15,6 +15,16 @@ import re
 DEVICE = 'cuda'
 DEBUG = False
 
+# * HYPERPARAMETERS ------
+hid_size = 400 #! MODIFY
+emb_size = 300 #! MODIFY
+
+lr = 0.5 # ! MODIFY
+clip = 5 # Clip the gradient #? MODIFY
+n_epochs = 100
+patience = 3
+# * ------
+
 if __name__ == "__main__":
     #Wrtite the code to load the datasets and to run your functions
     # Print the results
@@ -39,12 +49,6 @@ if __name__ == "__main__":
     test_loader = DataLoader(test_dataset, batch_size=128, collate_fn=partial(collate_fn, pad_token=lang.word2id["<pad>"]))
     
     # * MODEL SETUP*
-    hid_size = 400 #! MODIFY
-    emb_size = 300 #! MODIFY
-    
-    lr = 0.01 # ! MODIFY
-    clip = 5 # Clip the gradient #? MODIFY
-    
     vocab_len = len(lang.word2id)
     
     if DEBUG:
@@ -59,23 +63,27 @@ if __name__ == "__main__":
     
     # * TRAINING
 
-    n_epochs = 100
-    patience = 3
+    
     losses_train = []
     losses_dev = []
+    ppls_dev = []
     sampled_epochs = []
     best_ppl = math.inf
     best_model = None
+    
+    
+    print(f"hidden layers: {hid_size}, emb_size: {emb_size}, lr: {lr}, clip: {clip}, patience: {patience}")
     pbar = tqdm(range(1,n_epochs))
+    
     #If the PPL is too high try to change the learning rate
     for epoch in pbar:
-        break
         loss = train_loop(train_loader, optimizer, criterion_train, model, clip)    
         if epoch % 1 == 0:
             sampled_epochs.append(epoch)
             losses_train.append(np.asarray(loss).mean())
             ppl_dev, loss_dev = eval_loop(dev_loader, criterion_eval, model)
             losses_dev.append(np.asarray(loss_dev).mean())
+            ppls_dev.append(ppl_dev)
             pbar.set_description("PPL: %f" % ppl_dev)
             if  ppl_dev < best_ppl: # the lower, the better
                 best_ppl = ppl_dev
@@ -86,10 +94,12 @@ if __name__ == "__main__":
                 
             if patience <= 0: # Early stopping with patience
                 break # Not nice but it keeps the code clean
-
-    #best_model.to(DEVICE)
-    #final_ppl,  _ = eval_loop(test_loader, criterion_eval, best_model)    
-    #print('Test ppl: ', final_ppl)
     
-    want_to_save_model(best_model) # to choose whether to save the model
-    save_log_csv(hid_size, emb_size, lr, clip, n_epochs, patience, 0)
+
+    best_model.to(DEVICE)
+    final_ppl,  _ = eval_loop(test_loader, criterion_eval, best_model)    
+    print('Test ppl: ', final_ppl)
+    
+    model_id = want_to_save_model(best_model) # to choose whether to save the model
+    save_training_plot(losses_train, losses_dev, ppls_dev, f"plots/training_plot_{model_id}.png")        
+    save_log_txt(model_id, hid_size, emb_size, lr, clip, n_epochs, patience, ppl_dev, final_ppl)
