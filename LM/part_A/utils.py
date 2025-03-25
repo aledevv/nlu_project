@@ -182,29 +182,36 @@ def want_to_save_model(model):
 
 # * TO STORE LOG (configuration and performance of each training)
 
-
-def save_log_txt(model_id=0, hidden_size=None, emb_size=None, learning_rate=None, clip=None, epochs=0, patience=0, dev_ppl=0, final_ppl=0, log_file='training_log.txt'):
+def save_log_csv(model_id=0, hidden_size=None, emb_size=None, learning_rate=None, clip=None, epochs=0, patience=0, dev_ppl=0, final_ppl=0, log_file='training_log.csv'):
     # Definisce i nomi delle colonne
-    fieldnames = ['Model ID', 'Hidden Size', 'Embedding Size', 'Learning Rate', 
-                  'Gradient Clip', 'Epochs', 'Patience', 'Dev PPL', 'Final PPL']
+    fieldnames = ['Model ID', 'Hidden Size', 'Embedding Size', 'Learning Rate', 'Gradient Clip', 'Epochs', 'Patience', 'Dev PPL', 'Final PPL']
 
-    # Dati da salvare
-    log_entry = [model_id, hidden_size, emb_size, learning_rate, clip, epochs, patience, dev_ppl, final_ppl]
-
-    # Controlla se il file esiste già
+    # Verifica se il file esiste già
     file_exists = os.path.exists(log_file)
 
-    # Se il file non esiste, crea l'intestazione
-    with open(log_file, mode='a') as f:
+    # Dati da salvare
+    log_entry = {
+        'Model ID': model_id,
+        'Hidden Size': hidden_size,
+        'Embedding Size': emb_size,
+        'Learning Rate': learning_rate,
+        'Gradient Clip': clip,
+        'Epochs': epochs,
+        'Patience': patience,
+        'Dev PPL': dev_ppl,
+        'Final PPL': final_ppl
+    }
+
+    # Scrive su CSV
+    with open(log_file, mode='a', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
         if not file_exists:
-            f.write(tabulate([fieldnames], tablefmt="grid") + "\n")
+            writer.writeheader()  # Scrive l'intestazione solo se il file non esiste
+        writer.writerow(log_entry)
 
-        # Scrive i dati nella tabella
-        f.write(tabulate([log_entry], tablefmt="grid") + "\n")
-
-    # Stampa il log a schermo
+    # Stampa il log in formato tabellare
     print("\nLog salvato con successo! 📊")
-    print(tabulate([log_entry], headers=fieldnames, tablefmt="grid"))
+    print(tabulate([log_entry.values()], headers=fieldnames, tablefmt="grid"))
 
 
 # * FUNCTION TO PLOT TRAINING
@@ -212,7 +219,7 @@ import matplotlib.pyplot as plt
 
 def save_training_plot(losses_train, losses_dev, ppls_dev, filename="training_plot.png"):
     """
-    Saves the plot showing the evolution of the loss and perplexity during training and eval
+    Saves the plot showing the evolution of the loss and perplexity during training and eval.
     """
     epochs = range(1, len(losses_train) + 1)
 
@@ -229,6 +236,7 @@ def save_training_plot(losses_train, losses_dev, ppls_dev, filename="training_pl
 
     # Plot della Perplexity di Validazione
     ax[1].plot(epochs, ppls_dev, marker='o', linestyle='-', label="Validation PPL", color='g')
+    ax[1].axhline(y=250, color='orange', linestyle='--', label="Threshold (250)")  # Linea orizzontale
     ax[1].set_title("Perplexity on Validation Set")
     ax[1].set_xlabel("Epoch")
     ax[1].set_ylabel("Perplexity")

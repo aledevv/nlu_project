@@ -19,10 +19,10 @@ DEBUG = False
 hid_size = 400 #! MODIFY
 emb_size = 300 #! MODIFY
 
-lr = 0.5 # ! MODIFY
+lr = 0.8 # ! MODIFY
 clip = 5 # Clip the gradient #? MODIFY
 n_epochs = 100
-patience = 3
+patience_init = 3
 # * ------
 
 if __name__ == "__main__":
@@ -70,6 +70,7 @@ if __name__ == "__main__":
     sampled_epochs = []
     best_ppl = math.inf
     best_model = None
+    patience = patience_init
     
     
     print(f"hidden layers: {hid_size}, emb_size: {emb_size}, lr: {lr}, clip: {clip}, patience: {patience}")
@@ -102,4 +103,4 @@ if __name__ == "__main__":
     
     model_id = want_to_save_model(best_model) # to choose whether to save the model
     save_training_plot(losses_train, losses_dev, ppls_dev, f"plots/training_plot_{model_id}.png")        
-    save_log_txt(model_id, hid_size, emb_size, lr, clip, n_epochs, patience, ppl_dev, final_ppl)
+    save_log_csv(model_id, hid_size, emb_size, lr, clip, n_epochs, patience_init, ppl_dev, final_ppl)
