@@ -16,13 +16,13 @@ DEVICE = 'cuda'
 DEBUG = False
 
 # * HYPERPARAMETERS ------
-hid_size = 400 #! MODIFY
-emb_size = 300 #! MODIFY
+hid_size = 1024 #! MODIFY # default (400)
+emb_size = 512 #! MODIFY # default (300)
 
-lr = 0.8 # ! MODIFY
-clip = 5 # Clip the gradient #? MODIFY
+lr = 0.00001 #! MODIFY
+clip = 5 # Clip the gradient #? MODIFY (5)
 n_epochs = 100
-patience_init = 3
+patience_init = 3 #? (3)
 # * ------
 
 if __name__ == "__main__":
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     model = LM_LSTM(emb_size, hid_size, vocab_len, pad_index=lang.word2id["<pad>"]).to(DEVICE)
     model.apply(init_weights)
     
-    optimizer = optim.SGD(model.parameters(), lr=lr)
+    optimizer = optim.AdamW(model.parameters(), lr=lr)
     criterion_train = nn.CrossEntropyLoss(ignore_index=lang.word2id["<pad>"])
     criterion_eval = nn.CrossEntropyLoss(ignore_index=lang.word2id["<pad>"], reduction='sum')
     
