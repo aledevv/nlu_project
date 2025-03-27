@@ -28,9 +28,9 @@ patience_init = 3 #? (3)
 if __name__ == "__main__":
     #Wrtite the code to load the datasets and to run your functions
     # Print the results
-    train_raw = read_file("dataset/PennTreeBank/ptb.train.txt")
-    dev_raw = read_file("dataset/PennTreeBank/ptb.valid.txt")
-    test_raw = read_file("dataset/PennTreeBank/ptb.test.txt")
+    train_raw = read_file("../dataset/PennTreeBank/ptb.train.txt")
+    dev_raw = read_file("../dataset/PennTreeBank/ptb.valid.txt")
+    test_raw = read_file("../dataset/PennTreeBank/ptb.test.txt")
     
     vocab = get_vocab(train_raw, ["<pad>", "<eos>"])
     
