@@ -11,18 +11,20 @@ import copy
 import curses
 import os
 import re
+from model import LM_LSTM
 
 DEVICE = 'cuda'
 DEBUG = False
 
 # * HYPERPARAMETERS ------
-hid_size = 1024 #! MODIFY # default (400)
-emb_size = 512 #! MODIFY # default (300)
+hid_size = 400 #! MODIFY # default (400)
+emb_size = 300 #! MODIFY # default (300)
 
-lr = 0.00001 #! MODIFY
+lr = 0.0001 #! MODIFY
 clip = 5 # Clip the gradient #? MODIFY (5)
 n_epochs = 100
 patience_init = 3 #? (3)
+training_batch_size = 32 #? (64)
 # * ------
 
 if __name__ == "__main__":
@@ -44,7 +46,8 @@ if __name__ == "__main__":
     dev_dataset = PennTreeBank(dev_raw, lang)
     test_dataset = PennTreeBank(test_raw, lang)
     
-    train_loader = DataLoader(train_dataset, batch_size=64, collate_fn=partial(collate_fn, pad_token=lang.word2id["<pad>"]),  shuffle=True)
+    # batch sizes: 64, 128, 128
+    train_loader = DataLoader(train_dataset, batch_size=training_batch_size, collate_fn=partial(collate_fn, pad_token=lang.word2id["<pad>"]),  shuffle=True)
     dev_loader = DataLoader(dev_dataset, batch_size=128, collate_fn=partial(collate_fn, pad_token=lang.word2id["<pad>"]))
     test_loader = DataLoader(test_dataset, batch_size=128, collate_fn=partial(collate_fn, pad_token=lang.word2id["<pad>"]))
     
@@ -73,7 +76,7 @@ if __name__ == "__main__":
     patience = patience_init
     
     
-    print(f"hidden layers: {hid_size}, emb_size: {emb_size}, lr: {lr}, clip: {clip}, patience: {patience}")
+    print(f"hidden layers: {hid_size}, emb_size: {emb_size}, lr: {lr}, clip: {clip}, patience: {patience}, batch size: {training_batch_size}")
     pbar = tqdm(range(1,n_epochs))
     
     #If the PPL is too high try to change the learning rate

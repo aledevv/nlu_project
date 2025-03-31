@@ -126,7 +126,7 @@ def collate_fn(data, pad_token):
 
 # * TO SAVE THE MODEL AFTER THE EVALUATION
 
-save_dir = "model_bin"
+save_dir = "bin"
 
 # Fancy selection menu
 def menu(stdscr):
@@ -182,7 +182,7 @@ def want_to_save_model(model):
 
 # * TO STORE LOG (configuration and performance of each training)
 
-def save_log_csv(model_id=0, hidden_size=None, emb_size=None, learning_rate=None, clip=None, epochs=0, patience=0, dev_ppl=0, final_ppl=0, log_file='training_log.csv'):
+def save_log_csv(model_id=0, hidden_size=None, emb_size=None, learning_rate=None, clip=None, epochs=0, patience=0, dev_ppl=0, final_ppl=0, log_file='training_log_drop.csv'):
     # Definisce i nomi delle colonne
     fieldnames = ['Model ID', 'Hidden Size', 'Embedding Size', 'Learning Rate', 'Gradient Clip', 'Epochs', 'Patience', 'Dev PPL', 'Final PPL']
 
