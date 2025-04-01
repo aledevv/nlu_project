@@ -11,9 +11,10 @@ import copy
 import curses
 import os
 import re
+from model import LM_LSTM
 
 # ! ***************************************************************************************************************************************************************
-# ! *************** DEVO RIPARTIRE DAL RISULTATO FINALE DELLA PARTE A, OPPURE SOLO IL PRIMO PUNTO (MODELLO LSTM)* [ATTUALMENTE HO FATTO IL SECONDO] ***************
+# ! *************** DEVO RIPARTIRE DAL RISULTATO FINALE DELLA PARTE A, OPPURE SOLO IL PRIMO PUNTO (MODELLO LSTM)? [ATTUALMENTE HO FATTO IL SECONDO] ***************
 # ! ***************************************************************************************************************************************************************
 
 
@@ -28,6 +29,14 @@ lr = 1 #! MODIFY
 clip = 5 # Clip the gradient #? MODIFY (5)
 n_epochs = 100
 patience_init = 3 #? (3)
+train_batch = 64 #? (64)
+
+#* regularizarion techniques to use
+WEIGHT_TYING = True                 #! prova anche weigt tying con un modello 400 hidden size e 400 emb size
+VARIATIONAL_DROPOUT = False
+NMT_AvSGD = False
+
+training_notes = ""  #TODO Notes that will be reported in the csv
 # * ------
 
 if __name__ == "__main__":
@@ -49,7 +58,7 @@ if __name__ == "__main__":
     dev_dataset = PennTreeBank(dev_raw, lang)
     test_dataset = PennTreeBank(test_raw, lang)
     
-    train_loader = DataLoader(train_dataset, batch_size=64, collate_fn=partial(collate_fn, pad_token=lang.word2id["<pad>"]),  shuffle=True)
+    train_loader = DataLoader(train_dataset, batch_size=train_batch, collate_fn=partial(collate_fn, pad_token=lang.word2id["<pad>"]),  shuffle=True)
     dev_loader = DataLoader(dev_dataset, batch_size=128, collate_fn=partial(collate_fn, pad_token=lang.word2id["<pad>"]))
     test_loader = DataLoader(test_dataset, batch_size=128, collate_fn=partial(collate_fn, pad_token=lang.word2id["<pad>"]))
     
@@ -59,7 +68,7 @@ if __name__ == "__main__":
     if DEBUG:
         DEVICE = 'cpu'
     
-    model = LM_LSTM(emb_size, hid_size, vocab_len, pad_index=lang.word2id["<pad>"]).to(DEVICE)
+    model = LM_LSTM(emb_size, hid_size, vocab_len, pad_index=lang.word2id["<pad>"], weight_tying=WEIGHT_TYING).to(DEVICE)
     model.apply(init_weights)
     
     optimizer = optim.SGD(model.parameters(), lr=lr)
@@ -77,8 +86,14 @@ if __name__ == "__main__":
     best_model = None
     patience = patience_init
     
+    if WEIGHT_TYING:
+        training_notes = training_notes + " Weight Tying,"
+    if VARIATIONAL_DROPOUT:
+        training_notes = training_notes + " Variational Dropout (no DropConnect),"
+    if NMT_AvSGD:
+        training_notes = training_notes + " Non-monotonically Triggered AvSGD,"
     
-    print(f"hidden layers: {hid_size}, emb_size: {emb_size}, lr: {lr}, clip: {clip}, patience: {patience}")
+    print(f"hidden layers: {hid_size}, emb_size: {emb_size}, lr: {lr}, clip: {clip}, patience: {patience}, batch_size: {train_batch}, notes: {training_notes if training_notes != "" else "None"}")
     pbar = tqdm(range(1,n_epochs))
     
     #If the PPL is too high try to change the learning rate
@@ -108,4 +123,4 @@ if __name__ == "__main__":
     
     model_id = want_to_save_model(best_model) # to choose whether to save the model
     save_training_plot(losses_train, losses_dev, ppls_dev, f"plots/training_plot_{model_id}.png")        
-    save_log_csv(model_id, hid_size, emb_size, lr, clip, n_epochs, patience_init, ppl_dev, final_ppl)
+    save_log_csv(model_id, hid_size, emb_size, lr, clip, n_epochs, patience_init, ppl_dev, final_ppl, training_notes)

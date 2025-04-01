@@ -1,0 +1,3 @@
+Model ID, Hidden Size, Embedding Size, Learning Rate, Gradient Clip, Epochs, Patience, Dev PPL           , Final PPL         , Notes
+       1,         400,            300,             1,             5,    100,        3, 151.9610996362445 , 143.82735663611956, Vanilla
+       2,         400,            300,             1,             5,    100,        3, 152.77781727902146, 144.89229171699301, Vannilla (I forgot to set weight tying's flag)

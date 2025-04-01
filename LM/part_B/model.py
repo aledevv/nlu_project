@@ -18,6 +18,10 @@ class LM_LSTM(nn.Module):
         
         self.use_weight_tying = weight_tying    #? Flag to say whether to use weight tying
         
+        # just for debug
+        if self.use_weight_tying:
+            print("Applying weight tying")
+        
         if self.use_weight_tying and hidden_size != emb_size:   #? If hidden size doesn't match embedding size we need to perform a (linear) mapping
             self.hid2emb = nn.Linear(hidden_size, emb_size)
             output_input_dim = emb_size
