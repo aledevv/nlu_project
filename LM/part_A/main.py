@@ -20,11 +20,11 @@ DEBUG = False
 hid_size = 400 #! MODIFY # default (400)
 emb_size = 300 #! MODIFY # default (300)
 
-lr = 0.0001 #! MODIFY
+lr = 0.1 #! MODIFY
 clip = 5 # Clip the gradient #? MODIFY (5)
 n_epochs = 100
 patience_init = 3 #? (3)
-training_batch_size = 32 #? (64)
+training_batch_size = 64 #? (64)
 # * ------
 
 if __name__ == "__main__":
@@ -60,7 +60,7 @@ if __name__ == "__main__":
     model = LM_LSTM(emb_size, hid_size, vocab_len, pad_index=lang.word2id["<pad>"]).to(DEVICE)
     model.apply(init_weights)
     
-    optimizer = optim.AdamW(model.parameters(), lr=lr)
+    optimizer = optim.SGD(model.parameters(), lr=lr)
     criterion_train = nn.CrossEntropyLoss(ignore_index=lang.word2id["<pad>"])
     criterion_eval = nn.CrossEntropyLoss(ignore_index=lang.word2id["<pad>"], reduction='sum')
     
