@@ -32,11 +32,11 @@ patience_init = 3 #? (3)
 train_batch = 64 #? (64)
 
 #* regularizarion techniques to use
-WEIGHT_TYING = True                 #! prova anche weigt tying con un modello 400 hidden size e 400 emb size
-VARIATIONAL_DROPOUT = False
+WEIGHT_TYING = True                 
+VARIATIONAL_DROPOUT = True
 NMT_AvSGD = False
 
-training_notes = ""  #TODO Notes that will be reported in the csv
+training_notes = '(first 2 techniques)'  #TODO Notes that will be reported in the csv
 # * ------
 
 if __name__ == "__main__":
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     if DEBUG:
         DEVICE = 'cpu'
     
-    model = LM_LSTM(emb_size, hid_size, vocab_len, pad_index=lang.word2id["<pad>"], weight_tying=WEIGHT_TYING).to(DEVICE)
+    model = LM_LSTM(emb_size, hid_size, vocab_len, pad_index=lang.word2id["<pad>"], use_weight_tying=WEIGHT_TYING).to(DEVICE)
     model.apply(init_weights)
     
     optimizer = optim.SGD(model.parameters(), lr=lr)
@@ -87,13 +87,13 @@ if __name__ == "__main__":
     patience = patience_init
     
     if WEIGHT_TYING:
-        training_notes = training_notes + " Weight Tying,"
+        training_notes = training_notes + ' Weight Tying,'
     if VARIATIONAL_DROPOUT:
-        training_notes = training_notes + " Variational Dropout (no DropConnect),"
+        training_notes = training_notes + ' Variational Dropout,'
     if NMT_AvSGD:
-        training_notes = training_notes + " Non-monotonically Triggered AvSGD,"
+        training_notes = training_notes + ' Non-monotonically Triggered AvSGD,'
     
-    print(f"hidden layers: {hid_size}, emb_size: {emb_size}, lr: {lr}, clip: {clip}, patience: {patience}, batch_size: {train_batch}, notes: {training_notes if training_notes != "" else "None"}")
+    print(f"hidden layers: {hid_size}, emb_size: {emb_size}, lr: {lr}, clip: {clip}, patience: {patience}, batch_size: {train_batch}, notes: {training_notes if training_notes != '' else 'None'}")
     pbar = tqdm(range(1,n_epochs))
     
     #If the PPL is too high try to change the learning rate
