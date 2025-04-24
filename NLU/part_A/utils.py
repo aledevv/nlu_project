@@ -7,6 +7,10 @@ import numpy as np
 import torch.utils.data as data
 from sklearn.model_selection import train_test_split
 from collections import Counter
+import torch
+import csv
+import matplotlib.pyplot as plt
+import os
 
 # ! GLOBAL VARIABLES
 device = 'cuda:0'
@@ -94,8 +98,8 @@ def load_ATIS():
             dataset = json.loads(f.read())
         return dataset
 
-    tmp_train_raw = load_data(os.path.join('..','ATIS','train.json'))
-    test_raw = load_data(os.path.join('..','ATIS','test.json'))
+    tmp_train_raw = load_data(os.path.join('../..','ATIS','train.json'))
+    test_raw = load_data(os.path.join('../..','ATIS','test.json'))
     # print('Train samples:', len(tmp_train_raw))
     # print('Test samples:', len(test_raw))
 
@@ -129,18 +133,6 @@ def create_dev_set(tmp_train_raw, test_raw):
 
     y_test = [x['intent'] for x in test_raw]
 
-    # Intent distributions
-    print('Train:')
-    pprint({k:round(v/len(y_train),3)*100 for k, v in sorted(Counter(y_train).items())})
-    print('Dev:'), 
-    pprint({k:round(v/len(y_dev),3)*100 for k, v in sorted(Counter(y_dev).items())})
-    print('Test:') 
-    pprint({k:round(v/len(y_test),3)*100 for k, v in sorted(Counter(y_test).items())})
-    print('='*89)
-    # Dataset size
-    print('TRAIN size:', len(train_raw))
-    print('DEV size:', len(dev_raw))
-    print('TEST size:', len(test_raw))
     
     return train_raw, dev_raw, test_raw
 
@@ -183,3 +175,84 @@ def collate_fn(data):
     new_item["slots_len"] = y_lengths
     return new_item
 
+
+def save_loss_data_per_run(run_idx, run_epochs, run_train_losses, run_dev_losses, 
+                           f1, acc, config, exp_dir):
+    """
+    Salva il file .npz con i punti e il grafico con info della singola run.
+    """
+    # 1. Salva i dati
+    data_path = os.path.join(exp_dir, f"run{run_idx+1}_loss_data.npz")
+    np.savez(data_path, epochs=run_epochs, train=run_train_losses, dev=run_dev_losses)
+
+    # 2. Crea il plot
+    plt.figure(figsize=(8, 5))
+    plt.title(f"Run {run_idx+1} - Train/Dev Loss")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.plot(run_epochs, run_train_losses, label="Train loss")
+    plt.plot(run_epochs, run_dev_losses, label="Dev loss")
+    plt.legend()
+
+    # 3. Annotazione a lato
+    info = (
+        f"Hid: {config['hid_size']}, Emb: {config['emb_size']}, LR: {config['lr']}, Clip: {config['clip']}\n"
+        f"F1: {round(f1, 3)}, Intent Acc: {round(acc, 3)}"
+    )
+    plt.text(1.02, 0.5, info, transform=plt.gca().transAxes,
+             verticalalignment='center', fontsize=10,
+             bbox=dict(facecolor='white', alpha=0.5))
+
+    # 4. Salva il grafico
+    plt.tight_layout()
+    plot_path = os.path.join(exp_dir, f"run{run_idx+1}_loss_plot.png")
+    plt.savefig(plot_path)
+    plt.close()
+    
+
+def plot_all_runs(all_losses_train, all_losses_dev, all_epochs, exp_dir):
+    """
+    Crea un grafico con tutte le run, con colori diversi.
+    """
+    plt.figure(figsize=(10, 6))
+    for i, (train, dev, epochs) in enumerate(zip(all_losses_train, all_losses_dev, all_epochs)):
+        plt.plot(epochs, train, label=f"Train Run {i+1}")
+        plt.plot(epochs, dev, '--', label=f"Dev Run {i+1}")
+
+    plt.title("All Runs - Train/Dev Loss")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    max_loss = max([max(run) for run in all_losses_dev])  # assuming all_losses_dev is a list of list
+    plt.ylim(0, max_loss + 0.1)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(os.path.join(exp_dir, "all_runs_plot.png"))
+    plt.close()
+
+
+def log_experiment_summary(timestamp, config, f1s, accs, exp_dir, summary_path="experiments/summary.csv"):
+    """
+    Logga in un file CSV globale le metriche dell'esperimento.
+    """
+    # Modifica l'header per includere tutte le nuove configurazioni
+    header = ['timestamp', 'hid_size', 'emb_size', 'lr', 'clip', 'runs', 'batch_size_train', 'batch_size_eval',
+              'n_epochs', 'patience', 'cutoff', 'bidirectional', 'dropout', 'dropout_rate', 'n_layers',
+              'f1_mean', 'f1_std', 'acc_mean', 'acc_std', 'path']
+    
+    # Prepara la riga da scrivere nel CSV
+    row = [
+        timestamp, config['hid_size'], config['emb_size'], config['lr'], config['clip'], config['runs'],
+        config['batch_size_train'], config['batch_size_eval'], config['n_epochs'], config['patience'], config['cutoff'],
+        config['bidirectional'], config['dropout'], config['dropout_rate'], config['n_layers'],
+        round(f1s.mean(), 3), round(f1s.std(), 3), round(accs.mean(), 3), round(accs.std(), 3), exp_dir
+    ]
+
+    # Controlla se scrivere l'intestazione del file CSV
+    write_header = not os.path.exists(summary_path)
+
+    # Scrivi i dati nel file CSV
+    with open(summary_path, 'a', newline='') as f:
+        writer = csv.writer(f)
+        if write_header:
+            writer.writerow(header)  # Scrivi l'intestazione se il file non esiste
+        writer.writerow(row)  # Scrivi la riga con i risultati dell'esperimento
