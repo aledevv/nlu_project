@@ -16,27 +16,29 @@ import os
 import shutil
 
 def prepare_data(config):
+    # Carica dati grezzi
     tmp_train_raw, test_raw = load_ATIS()
     train_raw, dev_raw, test_raw = create_dev_set(tmp_train_raw, test_raw)
 
-    words = sum([x['utterance'].split() for x in train_raw], [])
-    corpus = train_raw + dev_raw + test_raw
-    slots = set(sum([line['slots'].split() for line in corpus], []))
-    intents = set([line['intent'] for line in corpus])
+    # Tokenizer BERT
+    tokenizer = load_tokenizer(config['bert_model'])
 
-    lang = Lang(words, intents, slots, cutoff=config['cutoff'])
+    # Costruisci mapping intent e slot
+    intent2id, slot2id = get_label_maps(train_raw + dev_raw + test_raw)
 
-    train_dataset = IntentsAndSlots(train_raw, lang)
-    dev_dataset = IntentsAndSlots(dev_raw, lang)
-    test_dataset = IntentsAndSlots(test_raw, lang)
+    # Crea dataset BERT
+    train_dataset = BERTJointDataset(train_raw, tokenizer, intent2id, slot2id, max_len=config['max_len'])
+    dev_dataset   = BERTJointDataset(dev_raw,   tokenizer, intent2id, slot2id, max_len=config['max_len'])
+    test_dataset  = BERTJointDataset(test_raw,  tokenizer, intent2id, slot2id, max_len=config['max_len'])
 
-    return lang, train_dataset, dev_dataset, test_dataset
+    return train_dataset, dev_dataset, test_dataset
 
 
-def get_dataloaders(train_dataset, dev_dataset, test_dataset, config):
-    train_loader = DataLoader(train_dataset, batch_size=config['batch_size_train'], collate_fn=collate_fn, shuffle=True)
-    dev_loader = DataLoader(dev_dataset, batch_size=config['batch_size_eval'], collate_fn=collate_fn)
-    test_loader = DataLoader(test_dataset, batch_size=config['batch_size_eval'], collate_fn=collate_fn)
+def create_data_loaders(config, train_dataset, dev_dataset, test_dataset):
+    train_loader = DataLoader(train_dataset, batch_size=config['batch_size_train'], shuffle=True)
+    dev_loader   = DataLoader(dev_dataset, batch_size=config['batch_size_eval'], shuffle=False)
+    test_loader  = DataLoader(test_dataset, batch_size=config['batch_size_eval'], shuffle=False)
+
     return train_loader, dev_loader, test_loader
 
 
@@ -60,23 +62,19 @@ def init_model(lang, config):
 
 
 def run_experiments(config, model_class, data_loaders, lang):
-    # === Init experiment folder ===
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M")
-    flags = f"bi{config['bidirectional']}_do{config['dropout']}"
-    exp_dir = os.path.join("experiments", f"exp_{timestamp}_{flags}")
-    os.makedirs(exp_dir, exist_ok=True)
-    bin_dir = os.path.join(exp_dir, "bin")
-    os.makedirs(bin_dir, exist_ok=True)
+    # # === Init experiment folder === #! SBLOCCA STA ROBA POI
+    # timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+    # flags = f"bi{config['bidirectional']}_do{config['dropout']}"
+    # exp_dir = os.path.join("experiments", f"exp_{timestamp}_{flags}")
+    # os.makedirs(exp_dir, exist_ok=True)
+    # bin_dir = os.path.join(exp_dir, "bin")
+    # os.makedirs(bin_dir, exist_ok=True)
 
-    # Save config
-    with open(os.path.join(exp_dir, "config.json"), "w") as f:
-        json.dump(config, f, indent=4)
+    # # Save config
+    # with open(os.path.join(exp_dir, "config.json"), "w") as f:
+    #     json.dump(config, f, indent=4)
 
-    # === Unpack data ===
-    train_loader, dev_loader, test_loader = data_loaders
-    out_slot = len(lang.slot2id)
-    out_int = len(lang.intent2id)
-    vocab_len = len(lang.word2id)
+    
 
     all_losses_train, all_losses_dev, all_epochs = [], [], []
     slot_f1s, intent_accs = [], []
@@ -166,26 +164,6 @@ def run_experiments(config, model_class, data_loaders, lang):
 
     return slot_f1s, intent_accs, all_losses_train, all_losses_dev, all_epochs
 
-
-def init_weights(mat):
-    for m in mat.modules():
-        if type(m) in [nn.GRU, nn.LSTM, nn.RNN]:
-            for name, param in m.named_parameters():
-                if 'weight_ih' in name:
-                    for idx in range(4):
-                        mul = param.shape[0]//4
-                        torch.nn.init.xavier_uniform_(param[idx*mul:(idx+1)*mul])
-                elif 'weight_hh' in name:
-                    for idx in range(4):
-                        mul = param.shape[0]//4
-                        torch.nn.init.orthogonal_(param[idx*mul:(idx+1)*mul])
-                elif 'bias' in name:
-                    param.data.fill_(0)
-        else:
-            if type(m) in [nn.Linear]:
-                torch.nn.init.uniform_(m.weight, -0.01, 0.01)
-                if m.bias != None:
-                    m.bias.data.fill_(0.01)
                     
                     
 
@@ -205,6 +183,7 @@ def train_loop(data, optimizer, criterion_slots, criterion_intents, model, clip=
         torch.nn.utils.clip_grad_norm_(model.parameters(), clip)  
         optimizer.step() # Update the weights
     return loss_array
+
 
 def eval_loop(data, criterion_slots, criterion_intents, model, lang):
     model.eval()

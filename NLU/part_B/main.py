@@ -7,6 +7,8 @@ from functions import *
 
 # 📦 Experiments configuration
 base = {
+    "bert_model": "bert-base-uncased",
+    "max_len": 64,
     'batch_size_train': 128,
     'batch_size_eval': 64,
     'n_epochs': 200,
@@ -55,28 +57,40 @@ experiments = [
 
 if __name__ == "__main__":
     
-    if len(experiments) == 0:
-        print("NO experiments set")
-        quit()
+    # if len(experiments) == 0: #! SBLOCCA
+    #     print("NO experiments set")
+    #     quit()
     
     # Initialize the list of results
     all_results = []
     experiment_idx=0
     
-    for cfg in experiments:
+    #for cfg in experiments: #! SBLOCCA
         
-        print(f"=== 🏁 Started experiment {experiment_idx+1} of {len(experiments)} ===")
+        # print(f"=== 🏁 Started experiment {experiment_idx+1} of {len(experiments)} ===") #! SBLOCCA
         
-        lang, train_dataset, dev_dataset, test_dataset = prepare_data(cfg)
-        train_loader, dev_loader, test_loader = get_dataloaders(train_dataset, dev_dataset, test_dataset, cfg)
+        
+        #train_loader, dev_loader, test_loader = get_dataloaders(train_dataset, dev_dataset, test_dataset, cfg)
+    
+    train_dataset, dev_dataset, test_dataset = prepare_data(base)
+    train_loader, dev_loader, test_loader = create_data_loaders(base, train_dataset, dev_dataset, test_dataset)
+    
+    loader = DataLoader(train_dataset, batch_size=2, shuffle=True)
 
-        slot_f1s, intent_accs, all_tr, all_dev, all_ep = run_experiments(
-            config=cfg,
-            model_class=ModelIAS,
-            data_loaders=(train_loader, dev_loader, test_loader),
-            lang=lang,
-        )
+    batch = next(iter(loader))
+    print("Batch keys:", batch.keys())
+    print("Batch input_ids shape:", batch['input_ids'].shape)
+    print("Batch slot_labels shape:", batch['slot_labels'].shape)
+    print("Batch intent_label:", batch['intent_label'])
+            
+            
+        # slot_f1s, intent_accs, all_tr, all_dev, all_ep = run_experiments( #! SBLOCCA
+        #     config=cfg,
+        #     model_class=ModelIAS,
+        #     data_loaders=(train_loader, dev_loader, test_loader),
+        #     lang=lang,
+        # )
         
-        experiment_idx+=1
+        # experiment_idx+=1 #! SBLOCCA
 
 
