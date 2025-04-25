@@ -237,7 +237,7 @@ def log_experiment_summary(timestamp, config, f1s, accs, exp_dir, summary_path="
     # Modifica l'header per includere tutte le nuove configurazioni
     header = ['timestamp', 'hid_size', 'emb_size', 'lr', 'clip', 'runs', 'batch_size_train', 'batch_size_eval',
               'n_epochs', 'patience', 'cutoff', 'bidirectional', 'dropout', 'dropout_rate', 'n_layers',
-              'f1_mean', 'f1_std', 'acc_mean', 'acc_std', 'path']
+              'dev_f1_mean', 'dev_f1_std', 'dev_acc_mean', 'dev_acc_std', 'path']
     
     # Prepara la riga da scrivere nel CSV
     row = [

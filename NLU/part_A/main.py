@@ -21,18 +21,43 @@ experiments = [
     {**base, 'hid_size': 200, 'emb_size': 300, 'lr': 1e-4, **flags}
     for flags in [
         # {'bidirectional': False, 'dropout': False, 'dropout_rate': 0.0, 'n_layers': 1}, # Vanilla
-        {'bidirectional': True, 'dropout': False, 'dropout_rate': 0.0, 'n_layers': 1},  # Bidirectional
-        {'bidirectional': False, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1},  # Just dropout
-        {'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1},   # bidirecitional and dropout
-        {'bidirectional': True, 'dropout': True, 'dropout_rate': 0.3, 'n_layers': 1},   # same but higher dropout probability
-        {'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 2},   # trying 2 layers with both modifications
-        {'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1, 'hid_size': 300}, # both but with higher num of layers
-        {'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1, 'emb_size': 400}, # both but higher embedding size
+        # {'bidirectional': True, 'dropout': False, 'dropout_rate': 0.0, 'n_layers': 1},  # Bidirectional
+        # {'bidirectional': False, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1},  # Just dropout
+        # {'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1},   # bidirecitional and dropout
+        # {'bidirectional': True, 'dropout': True, 'dropout_rate': 0.3, 'n_layers': 1},   # same but higher dropout probability
+        # {'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 2},   # trying 2 layers with both modifications
+        # {'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1, 'hid_size': 300}, # both but with higher num of layers
+        # {'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1, 'emb_size': 400}, # both but higher embedding size
+        {'bidirectional': True, 'dropout': True, 'dropout_rate': 0.8, 'n_layers': 1},   # test with critically higher dropout
+        {'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 5},   # trying 5 layers with both modifications
+        {'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 10},   # trying 10 layers with both modifications
+        {'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1, 'hid_size': 300, 'emb_size': 400}, # both enhancement in hid and emb size
+        
+
+
+        # # ? Extra experiments
+        # {**base, 'hid_size': 200, 'emb_size': 300, 'lr': 1e-3, 'batch_size_train': 64, 'batch_size_eval': 64, 'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1},
+        # {**base, 'hid_size': 200, 'emb_size': 300, 'lr': 5e-4, 'batch_size_train': 64, 'batch_size_eval': 64, 'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1},
+        # {**base, 'hid_size': 200, 'emb_size': 300, 'lr': 3e-4, 'batch_size_train': 256, 'batch_size_eval': 128, 'bidirectional': False, 'dropout': False, 'dropout_rate': 0.0, 'n_layers': 1},
+        # {**base, 'hid_size': 200, 'emb_size': 300, 'lr': 1e-4, 'batch_size_train': 64, 'batch_size_eval': 64, 'bidirectional': True, 'dropout': False, 'dropout_rate': 0.0, 'n_layers': 1},
+        # {**base, 'hid_size': 200, 'emb_size': 300, 'lr': 5e-5, 'batch_size_train': 128, 'batch_size_eval': 64, 'bidirectional': True, 'dropout': True, 'dropout_rate': 0.3, 'n_layers': 1},
+        # {**base, 'hid_size': 200, 'emb_size': 300, 'lr': 5e-4, 'batch_size_train': 256, 'batch_size_eval': 128, 'bidirectional': False, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1},
+        # {**base, 'hid_size': 200, 'emb_size': 300, 'lr': 3e-4, 'batch_size_train': 128, 'batch_size_eval': 64, 'bidirectional': True, 'dropout': False, 'dropout_rate': 0.0, 'n_layers': 1},
+        # {**base, 'hid_size': 200, 'emb_size': 300, 'lr': 5e-5, 'batch_size_train': 64, 'batch_size_eval': 64, 'bidirectional': False, 'dropout': True, 'dropout_rate': 0.3, 'n_layers': 1},
+        # {**base, 'hid_size': 200, 'emb_size': 300, 'lr': 1e-4, 'batch_size_train': 256, 'batch_size_eval': 128, 'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1},
+
+        {**base, 'hid_size': 200, 'emb_size': 300, 'lr': 0.01, 'batch_size_train': 128, 'batch_size_eval': 64, 'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1}, # high lr
+        {**base, 'hid_size': 200, 'emb_size': 300, 'lr': 1e-6, 'batch_size_train': 128, 'batch_size_eval': 64, 'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1}, # very small lr
+
     ]
 ]
 
 
 if __name__ == "__main__":
+    
+    if len(experiments) == 0:
+        print("NO experiments set")
+        quit()
     
     # Initialize the list of results
     all_results = []

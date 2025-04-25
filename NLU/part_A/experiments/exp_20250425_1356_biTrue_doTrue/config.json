@@ -1,0 +1,16 @@
+{
+    "batch_size_train": 64,
+    "batch_size_eval": 64,
+    "n_epochs": 200,
+    "clip": 5,
+    "runs": 3,
+    "patience": 3,
+    "cutoff": 0,
+    "hid_size": 200,
+    "emb_size": 300,
+    "lr": 0.0005,
+    "bidirectional": true,
+    "dropout": true,
+    "dropout_rate": 0.1,
+    "n_layers": 1
+}

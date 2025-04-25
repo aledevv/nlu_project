@@ -145,7 +145,7 @@ def run_experiments(config, model_class, data_loaders, lang):
         
         # === Save each run ===
         save_loss_data_per_run(run_idx, sampled_epochs, losses_train, losses_dev,
-                               best_f1, intent_test['accuracy'], config, exp_dir)
+                               results_test['total']['f'], intent_test['accuracy'], config, exp_dir)
 
         all_losses_train.append(losses_train)
         all_losses_dev.append(losses_dev)
