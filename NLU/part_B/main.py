@@ -1,100 +1,53 @@
-# This file is used to run your functions and print the results
-# Please write your fuctions or classes in the functions.py
-
-# Import everything from functions.py file    
 from functions import *
-
+from transformers import BertTokenizerFast # Import BertTokenizer
 
 # 📦 Experiments configuration
 base = {
-    "bert_model": "bert-base-uncased",
-    "max_len": 64,
-    'batch_size_train': 128,
-    'batch_size_eval': 64,
-    'n_epochs': 200,
-    'clip': 5,
-    'runs': 1,
-    'patience': 3,
-    'cutoff': 0,
+    'batch_size_train': 16,  # Reduced batch size for BERT
+    'batch_size_eval': 32,
+    'n_epochs': 50,         # Adjust as needed
+    'clip': 1,              # Gradient clipping
+    'runs': 1,              # Number of training runs
+    'patience': 5,          # Patience for early stopping
+    'cutoff': 0,            # Cutoff for rare words (if used)
+    'lr': 2e-5,             # Learning rate (crucial for BERT)
+    'model_name': 'bert-base-uncased',  # Specify the BERT model
+    # --- BERT-specific parameters (you can add more if needed) ---
+    'bert_hidden_size': 768,  # Hidden size of BERT-base (adjust for -large)
+    'bert_dropout_prob': 0.1,  # Dropout probability in BERT
+    'bert_max_len': 128       # Max sequence length for BERT
 }
 
 # Specific configs for the experiments
 experiments = [
-    {**base, 'hid_size': 200, 'emb_size': 300, 'lr': 1e-4,}
-    for flags in [
-        {}, # Vanilla
-        # {'bidirectional': True, 'dropout': False, 'dropout_rate': 0.0, 'n_layers': 1},  # Bidirectional
-        # {'bidirectional': False, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1},  # Just dropout
-        # {'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1},   # bidirecitional and dropout
-        # {'bidirectional': True, 'dropout': True, 'dropout_rate': 0.3, 'n_layers': 1},   # same but higher dropout probability
-        # {'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 2},   # trying 2 layers with both modifications
-        # {'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1, 'hid_size': 300}, # both but with higher num of layers
-        # # {'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1, 'emb_size': 400}, # both but higher embedding size
-        # {'bidirectional': True, 'dropout': True, 'dropout_rate': 0.8, 'n_layers': 1},   # test with critically higher dropout
-        # {'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 5},   # trying 5 layers with both modifications
-        # {'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 10},   # trying 10 layers with both modifications
-        # {'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1, 'hid_size': 300, 'emb_size': 400}, # both enhancement in hid and emb size
-        
-
-
-        # # ? Extra experiments
-        # {**base, 'hid_size': 200, 'emb_size': 300, 'lr': 1e-3, 'batch_size_train': 64, 'batch_size_eval': 64, 'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1},
-        # {**base, 'hid_size': 200, 'emb_size': 300, 'lr': 5e-4, 'batch_size_train': 64, 'batch_size_eval': 64, 'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1},
-        # {**base, 'hid_size': 200, 'emb_size': 300, 'lr': 3e-4, 'batch_size_train': 256, 'batch_size_eval': 128, 'bidirectional': False, 'dropout': False, 'dropout_rate': 0.0, 'n_layers': 1},
-        # {**base, 'hid_size': 200, 'emb_size': 300, 'lr': 1e-4, 'batch_size_train': 64, 'batch_size_eval': 64, 'bidirectional': True, 'dropout': False, 'dropout_rate': 0.0, 'n_layers': 1},
-        # {**base, 'hid_size': 200, 'emb_size': 300, 'lr': 5e-5, 'batch_size_train': 128, 'batch_size_eval': 64, 'bidirectional': True, 'dropout': True, 'dropout_rate': 0.3, 'n_layers': 1},
-        # {**base, 'hid_size': 200, 'emb_size': 300, 'lr': 5e-4, 'batch_size_train': 256, 'batch_size_eval': 128, 'bidirectional': False, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1},
-        # {**base, 'hid_size': 200, 'emb_size': 300, 'lr': 3e-4, 'batch_size_train': 128, 'batch_size_eval': 64, 'bidirectional': True, 'dropout': False, 'dropout_rate': 0.0, 'n_layers': 1},
-        # {**base, 'hid_size': 200, 'emb_size': 300, 'lr': 5e-5, 'batch_size_train': 64, 'batch_size_eval': 64, 'bidirectional': False, 'dropout': True, 'dropout_rate': 0.3, 'n_layers': 1},
-        # {**base, 'hid_size': 200, 'emb_size': 300, 'lr': 1e-4, 'batch_size_train': 256, 'batch_size_eval': 128, 'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1},
-
-        # {**base, 'hid_size': 200, 'emb_size': 300, 'lr': 0.01, 'batch_size_train': 128, 'batch_size_eval': 64, 'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1}, # high lr
-        # {**base, 'hid_size': 200, 'emb_size': 300, 'lr': 1e-6, 'batch_size_train': 128, 'batch_size_eval': 64, 'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1}, # very small lr
-
-    ]
+    {**base, 'lr': 2e-5, 'model_name': 'bert-base-uncased'} # Experiment with learning rate and model size
+    # Add more experiments as needed (e.g., different BERT models, learning rates)
 ]
 
 
 if __name__ == "__main__":
-    
-    if len(experiments) == 0: #! SBLOCCA
+
+    if len(experiments) == 0:
         print("NO experiments set")
         quit()
-    
+
     # Initialize the list of results
     all_results = []
-    experiment_idx=0
-    
-    
-    
+    experiment_idx = 0
+
     for cfg in experiments:
-        
-        print(f"=== 🏁 Started experiment {experiment_idx+1} of {len(experiments)} ===")
-        
-        # * DATA SETUP
-        train_raw, dev_raw, test_raw = prepare_data(cfg)
-        
-        # Tokenizer BERT
-        tokenizer = load_tokenizer(base['bert_model'])
 
-        # Costruisci mapping intent e slot
-        intent2id, slot2id = get_label_maps(train_raw + dev_raw + test_raw)
+        print(f"=== 🏁 Started experiment {experiment_idx + 1} of {len(experiments)} ===")
 
-        # Crea dataset BERT
-        train_dataset = BERTJointDataset(train_raw, tokenizer, intent2id, slot2id, max_len=cfg['max_len'])
-        dev_dataset   = BERTJointDataset(dev_raw,   tokenizer, intent2id, slot2id, max_len=cfg['max_len'])
-        test_dataset  = BERTJointDataset(test_raw,  tokenizer, intent2id, slot2id, max_len=cfg['max_len'])
-        
-        train_loader, dev_loader, test_loader = create_data_loaders(cfg, train_dataset, dev_dataset, test_dataset)
+        lang, train_dataset, dev_dataset, test_dataset, tokenizer = prepare_data(cfg)  # Get tokenizer
+        train_loader, dev_loader, test_loader = get_dataloaders(train_dataset, dev_dataset, test_dataset, cfg)
 
         slot_f1s, intent_accs, all_tr, all_dev, all_ep = run_experiments(
             config=cfg,
-            model_class=BertForJointIntentAndSlot,
+            model_class=BertForIntentAndSlot,  # Use the BERT model class
             data_loaders=(train_loader, dev_loader, test_loader),
             lang=lang,
+            tokenizer=tokenizer # Pass the tokenizer
         )
-        
-        experiment_idx+=1
 
-
-
+        experiment_idx += 1

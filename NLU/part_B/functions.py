@@ -15,46 +15,148 @@ import matplotlib.pyplot as plt
 import os
 import shutil
 
+from transformers import BertTokenizerFast, BertConfig, BertModel
+
 def prepare_data(config):
-    # Carica dati grezzi
     tmp_train_raw, test_raw = load_ATIS()
     train_raw, dev_raw, test_raw = create_dev_set(tmp_train_raw, test_raw)
 
-    return train_raw, dev_raw, test_raw
+    words = sum([x['utterance'].split() for x in train_raw], [])
+    corpus = train_raw + dev_raw + test_raw
+    slots = set(sum([line['slots'].split() for line in corpus], []))
+    intents = set([line['intent'] for line in corpus])
 
+    lang = Lang(words, intents, slots, cutoff=config['cutoff'])
+    tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased')  # Or bert-large-uncased
+    train_dataset = IntentsAndSlots(train_raw, lang, tokenizer)
+    dev_dataset = IntentsAndSlots(dev_raw, lang, tokenizer)
+    test_dataset = IntentsAndSlots(test_raw, lang, tokenizer)
 
-def create_data_loaders(config, train_dataset, dev_dataset, test_dataset):
-    train_loader = DataLoader(train_dataset, batch_size=config['batch_size_train'], shuffle=True)
-    dev_loader   = DataLoader(dev_dataset, batch_size=config['batch_size_eval'], shuffle=False)
-    test_loader  = DataLoader(test_dataset, batch_size=config['batch_size_eval'], shuffle=False)
-
-    return train_loader, dev_loader, test_loader
-
+    return lang, train_dataset, dev_dataset, test_dataset, tokenizer  # Return tokenizer
 
 def init_model(lang, config):
-    model = ModelIAS(
-        config['hid_size'],
-        out_slot=len(lang.slot2id),
-        out_int=len(lang.intent2id),
-        emb_size=config['emb_size'],
-        vocab_len=len(lang.word2id),
-        pad_index=PAD_TOKEN
+    config_bert = BertConfig.from_pretrained('bert-base-uncased')  # Or bert-large-uncased
+    model = BertForIntentAndSlot.from_pretrained(
+        'bert-base-uncased',
+        config=config_bert,
+        num_intent_labels=len(lang.intent2id),
+        num_slot_labels=len(lang.slot2id)
     ).to(device)
 
-    model.apply(init_weights)
-
-    optimizer = optim.Adam(model.parameters(), lr=config['lr'])
+    optimizer = optim.AdamW(model.parameters(), lr=config['lr'])  # Use AdamW
     criterion_slots = nn.CrossEntropyLoss(ignore_index=PAD_TOKEN)
     criterion_intents = nn.CrossEntropyLoss()
 
     return model, optimizer, criterion_slots, criterion_intents
 
+def train_loop(data_loader, optimizer, criterion_slots, criterion_intents, model, clip=5):
+    model.train()
+    total_loss = 0
+    for batch in data_loader:
+        optimizer.zero_grad()
+        input_ids = batch['input_ids'].to(device)
+        attention_mask = batch['attention_mask'].to(device)
+        intent_labels = batch['intent'].to(device)
+        slot_labels = batch['slot_ids'].to(device)
 
-def run_experiments(config, model_class, data_loaders, lang):
+        outputs = model(input_ids, attention_mask=attention_mask, intent_labels=intent_labels, slot_labels=slot_labels)
+        loss = outputs[0]
+        total_loss += loss.item()
+
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), clip)
+        optimizer.step()
+    return total_loss / len(data_loader)
+
+def eval_loop(data_loader, criterion_slots, criterion_intents, model, lang, tokenizer):
+    model.eval()
+    total_loss = 0
+    ref_intents = []
+    hyp_intents = []
+    ref_slots = []
+    hyp_slots = []
+
+    with torch.no_grad():
+        for batch in data_loader:
+            input_ids = batch['input_ids'].to(device)
+            attention_mask = batch['attention_mask'].to(device)
+            intent_labels = batch['intent'].to(device)
+            slot_labels = batch['slot_ids'].to(device)
+
+            outputs = model(input_ids, attention_mask=attention_mask, intent_labels=intent_labels, slot_labels=slot_labels)
+            loss = outputs[0]
+            total_loss += loss.item()
+
+            intent_logits, slot_logits = outputs[1], outputs[2]
+
+            # Intent Evaluation
+            intent_preds = torch.argmax(intent_logits, axis=1).cpu().numpy()
+            intent_labels = intent_labels.cpu().numpy()
+            ref_intents.extend([lang.id2intent[i] for i in intent_labels])
+            hyp_intents.extend([lang.id2intent[i] for i in intent_preds])
+
+            # Slot Evaluation (Handle Sub-word Tokenization!)
+            slot_preds = torch.argmax(slot_logits, axis=2).cpu().numpy()
+            slot_labels = slot_labels.cpu().numpy()
+            
+            input_ids_np = input_ids.cpu().numpy()
+
+            for i in range(len(slot_preds)):  # Loop through each sequence in the batch
+                
+                # Decode the input_ids to get tokens
+                tokens = tokenizer.convert_ids_to_tokens(input_ids_np[i], skip_special_tokens=True)
+                
+                #  Align predictions and labels, considering sub-word tokenization
+                aligned_predictions = []
+                aligned_labels = []
+                
+                current_word_preds = []
+                current_word_labels = []
+
+                for j, token in enumerate(tokens):
+                     if token.startswith("##"):  # Part of a sub-word
+                         current_word_preds.append(lang.id2slot.get(slot_preds[i][j+1], 'O')) # +1 because of CLS token
+                         current_word_labels.append(lang.id2slot.get(slot_labels[i][j+1], 'O'))
+                     else:  # Start of a new word
+                         if current_word_preds:  # Process the previous word
+                             aligned_predictions.append(max(set(current_word_preds), key=current_word_preds.count))  # Or take the first, or any other strategy
+                             aligned_labels.append(max(set(current_word_labels), key=current_word_labels.count))
+                         current_word_preds = [lang.id2slot.get(slot_preds[i][j+1], 'O')]
+                         current_word_labels = [lang.id2slot.get(slot_labels[i][j+1], 'O')]
+                if current_word_preds:  # Process the last word
+                     aligned_predictions.append(max(set(current_word_preds), key=current_word_preds.count))
+                     aligned_labels.append(max(set(current_word_labels), key=current_word_labels.count))
+
+                # Get original words
+                original_words = utterance[i].split()
+
+                # Ensure lengths match (handle potential tokenizer edge cases)
+                min_len = min(len(original_words), len(aligned_predictions), len(aligned_labels))
+                
+                ref_slots.append([(original_words[k], aligned_labels[k]) for k in range(min_len)])
+                hyp_slots.append([(original_words[k], aligned_predictions[k]) for k in range(min_len)])
+                
+    try:
+        results = evaluate(ref_slots, hyp_slots)
+    except Exception as ex:
+        print("Warning:", ex)
+        results = {"total": {"f": 0}}
+
+    report_intent = classification_report(ref_intents, hyp_intents, zero_division=False, output_dict=True)
+    return results, report_intent, total_loss / len(data_loader)
+
+
+def get_dataloaders(train_dataset, dev_dataset, test_dataset, config):
+    train_loader = DataLoader(train_dataset, batch_size=config['batch_size_train'], collate_fn=collate_fn, shuffle=True)
+    dev_loader = DataLoader(dev_dataset, batch_size=config['batch_size_eval'], collate_fn=collate_fn)
+    test_loader = DataLoader(test_dataset, batch_size=config['batch_size_eval'], collate_fn=collate_fn)
+    return train_loader, dev_loader, test_loader
+
+
+def run_experiments(config, model_class, data_loaders, lang, tokenizer):
     # === Init experiment folder ===
     timestamp = datetime.now().strftime("%Y%m%d_%H%M")
-    flags = f"bi{config['bidirectional']}_do{config['dropout']}"
-    exp_dir = os.path.join("experiments", f"exp_{timestamp}_{flags}")
+    exp_dir = os.path.join("experiments", f"exp_{timestamp}")
     os.makedirs(exp_dir, exist_ok=True)
     bin_dir = os.path.join(exp_dir, "bin")
     os.makedirs(bin_dir, exist_ok=True)
@@ -63,25 +165,29 @@ def run_experiments(config, model_class, data_loaders, lang):
     with open(os.path.join(exp_dir, "config.json"), "w") as f:
         json.dump(config, f, indent=4)
 
-    # === Unpack data ===
     train_loader, dev_loader, test_loader = data_loaders
-    out_slot = len(lang.slot2id)
-    out_int = len(lang.intent2id)
-    vocab_len = len(lang.word2id)
-
     all_losses_train, all_losses_dev, all_epochs = [], [], []
     slot_f1s, intent_accs = [], []
 
     # RUN a series of trainings
     for run_idx in tqdm(range(config['runs']), desc="🚀 Runs"):
         
-        # Instantiating the model
+       # 1. Create BertConfig
+        try:
+            bert_config = BertConfig.from_pretrained("bert-base-uncased")  # Or any other model
+        except OSError as e:
+            print(f"Error loading model: {e}")
+            print(f"Please check if '{config['model_name']}' is a valid Hugging Face model name.")
+            continue  # Skip this run if the model can't be loaded
+        bert_config.hidden_size = config['bert_hidden_size']
+        bert_config.dropout = config['bert_dropout_prob']
+
+        # 2. Instantiate the model
         model = model_class(
-            config['hid_size'], out_slot, out_int, config['emb_size'],
-            vocab_len, config['n_layers'], config['bidirectional'], config['dropout'],
-            config['dropout_rate'], pad_index=PAD_TOKEN,
+            config=bert_config,  # Pass the BertConfig
+            num_intent_labels=len(lang.intent2id),
+            num_slot_labels=len(lang.slot2id)
         ).to(device)
-        model.apply(init_weights)
 
         optimizer = torch.optim.Adam(model.parameters(), lr=config['lr'])
         criterion_slots = torch.nn.CrossEntropyLoss(ignore_index=PAD_TOKEN)
@@ -95,13 +201,14 @@ def run_experiments(config, model_class, data_loaders, lang):
         # START TRAINING for the current run
         print(f"🌀 Starting run {run_idx+1}/{config['runs']}")
         for epoch in range(1, config['n_epochs'] + 1):
-            loss = train_loop(train_loader, optimizer, criterion_slots, criterion_intents, model)
 
+            loss = train_loop(train_loader, optimizer, criterion_slots, criterion_intents, model)
+            
             if epoch % 5 == 0:
                 sampled_epochs.append(epoch)
                 losses_train.append(np.mean(loss))
 
-                results_dev, intent_dev, loss_dev = eval_loop(dev_loader, criterion_slots, criterion_intents, model, lang)
+                results_dev, intent_dev, loss_dev = eval_loop(dev_loader, criterion_slots, criterion_intents, model, lang, tokenizer)
                 losses_dev.append(np.mean(loss_dev))
                 f1 = results_dev['total']['f']
 
@@ -156,74 +263,3 @@ def run_experiments(config, model_class, data_loaders, lang):
     shutil.rmtree(os.path.join(exp_dir, 'bin')) # Delete the folder 'bin/' with the weights of the runs
 
     return slot_f1s, intent_accs, all_losses_train, all_losses_dev, all_epochs
-
-                    
-def train_loop(data, optimizer, criterion_slots, criterion_intents, model, clip=5):
-    model.train()
-    loss_array = []
-    for sample in data:
-        optimizer.zero_grad() # Zeroing the gradient
-        slots, intent = model(sample['utterances'], sample['slots_len'])
-        loss_intent = criterion_intents(intent, sample['intents'])
-        loss_slot = criterion_slots(slots, sample['y_slots'])
-        loss = loss_intent + loss_slot # In joint training we sum the losses. 
-                                       # Is there another way to do that?
-        loss_array.append(loss.item())
-        loss.backward() # Compute the gradient, deleting the computational graph
-        # clip the gradient to avoid exploding gradients
-        torch.nn.utils.clip_grad_norm_(model.parameters(), clip)  
-        optimizer.step() # Update the weights
-    return loss_array
-
-def eval_loop(data, criterion_slots, criterion_intents, model, lang):
-    model.eval()
-    loss_array = []
-    
-    ref_intents = []
-    hyp_intents = []
-    
-    ref_slots = []
-    hyp_slots = []
-    #softmax = nn.Softmax(dim=1) # Use Softmax if you need the actual probability
-    with torch.no_grad(): # It used to avoid the creation of computational graph
-        for sample in data:
-            slots, intents = model(sample['utterances'], sample['slots_len'])
-            loss_intent = criterion_intents(intents, sample['intents'])
-            loss_slot = criterion_slots(slots, sample['y_slots'])
-            loss = loss_intent + loss_slot 
-            loss_array.append(loss.item())
-            # Intent inference
-            # Get the highest probable class
-            out_intents = [lang.id2intent[x] 
-                           for x in torch.argmax(intents, dim=1).tolist()] 
-            gt_intents = [lang.id2intent[x] for x in sample['intents'].tolist()]
-            ref_intents.extend(gt_intents)
-            hyp_intents.extend(out_intents)
-            
-            # Slot inference 
-            output_slots = torch.argmax(slots, dim=1)
-            for id_seq, seq in enumerate(output_slots):
-                length = sample['slots_len'].tolist()[id_seq]
-                utt_ids = sample['utterance'][id_seq][:length].tolist()
-                gt_ids = sample['y_slots'][id_seq].tolist()
-                gt_slots = [lang.id2slot[elem] for elem in gt_ids[:length]]
-                utterance = [lang.id2word[elem] for elem in utt_ids]
-                to_decode = seq[:length].tolist()
-                ref_slots.append([(utterance[id_el], elem) for id_el, elem in enumerate(gt_slots)])
-                tmp_seq = []
-                for id_el, elem in enumerate(to_decode):
-                    tmp_seq.append((utterance[id_el], lang.id2slot[elem]))
-                hyp_slots.append(tmp_seq)
-    try:            
-        results = evaluate(ref_slots, hyp_slots)
-    except Exception as ex:
-        # Sometimes the model predicts a class that is not in REF
-        print("Warning:", ex)
-        ref_s = set([x[1] for x in ref_slots])
-        hyp_s = set([x[1] for x in hyp_slots])
-        print(hyp_s.difference(ref_s))
-        results = {"total":{"f":0}}
-        
-    report_intent = classification_report(ref_intents, hyp_intents, 
-                                          zero_division=False, output_dict=True)
-    return results, report_intent, loss_array
