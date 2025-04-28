@@ -128,7 +128,7 @@ def eval_loop(data_loader, criterion_slots, criterion_intents, model, lang, toke
                      aligned_labels.append(max(set(current_word_labels), key=current_word_labels.count))
 
                 # Get original words
-                original_words = utterance[i].split()
+                original_words = utterance[i].split() # TODO FIXME
 
                 # Ensure lengths match (handle potential tokenizer edge cases)
                 min_len = min(len(original_words), len(aligned_predictions), len(aligned_labels))
