@@ -20,18 +20,7 @@ def prepare_data(config):
     tmp_train_raw, test_raw = load_ATIS()
     train_raw, dev_raw, test_raw = create_dev_set(tmp_train_raw, test_raw)
 
-    # Tokenizer BERT
-    tokenizer = load_tokenizer(config['bert_model'])
-
-    # Costruisci mapping intent e slot
-    intent2id, slot2id = get_label_maps(train_raw + dev_raw + test_raw)
-
-    # Crea dataset BERT
-    train_dataset = BERTJointDataset(train_raw, tokenizer, intent2id, slot2id, max_len=config['max_len'])
-    dev_dataset   = BERTJointDataset(dev_raw,   tokenizer, intent2id, slot2id, max_len=config['max_len'])
-    test_dataset  = BERTJointDataset(test_raw,  tokenizer, intent2id, slot2id, max_len=config['max_len'])
-
-    return train_dataset, dev_dataset, test_dataset
+    return train_raw, dev_raw, test_raw
 
 
 def create_data_loaders(config, train_dataset, dev_dataset, test_dataset):
@@ -62,19 +51,23 @@ def init_model(lang, config):
 
 
 def run_experiments(config, model_class, data_loaders, lang):
-    # # === Init experiment folder === #! SBLOCCA STA ROBA POI
-    # timestamp = datetime.now().strftime("%Y%m%d_%H%M")
-    # flags = f"bi{config['bidirectional']}_do{config['dropout']}"
-    # exp_dir = os.path.join("experiments", f"exp_{timestamp}_{flags}")
-    # os.makedirs(exp_dir, exist_ok=True)
-    # bin_dir = os.path.join(exp_dir, "bin")
-    # os.makedirs(bin_dir, exist_ok=True)
+    # === Init experiment folder ===
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+    flags = f"bi{config['bidirectional']}_do{config['dropout']}"
+    exp_dir = os.path.join("experiments", f"exp_{timestamp}_{flags}")
+    os.makedirs(exp_dir, exist_ok=True)
+    bin_dir = os.path.join(exp_dir, "bin")
+    os.makedirs(bin_dir, exist_ok=True)
 
-    # # Save config
-    # with open(os.path.join(exp_dir, "config.json"), "w") as f:
-    #     json.dump(config, f, indent=4)
+    # Save config
+    with open(os.path.join(exp_dir, "config.json"), "w") as f:
+        json.dump(config, f, indent=4)
 
-    
+    # === Unpack data ===
+    train_loader, dev_loader, test_loader = data_loaders
+    out_slot = len(lang.slot2id)
+    out_int = len(lang.intent2id)
+    vocab_len = len(lang.word2id)
 
     all_losses_train, all_losses_dev, all_epochs = [], [], []
     slot_f1s, intent_accs = [], []
@@ -165,8 +158,6 @@ def run_experiments(config, model_class, data_loaders, lang):
     return slot_f1s, intent_accs, all_losses_train, all_losses_dev, all_epochs
 
                     
-                    
-
 def train_loop(data, optimizer, criterion_slots, criterion_intents, model, clip=5):
     model.train()
     loss_array = []
@@ -183,7 +174,6 @@ def train_loop(data, optimizer, criterion_slots, criterion_intents, model, clip=
         torch.nn.utils.clip_grad_norm_(model.parameters(), clip)  
         optimizer.step() # Update the weights
     return loss_array
-
 
 def eval_loop(data, criterion_slots, criterion_intents, model, lang):
     model.eval()

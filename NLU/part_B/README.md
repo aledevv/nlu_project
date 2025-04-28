@@ -10,3 +10,8 @@
 - controlla problema di sub-tokenization
 - Configura per eseguire fine-tuning su BERT-base e BERT-large
 - vedi quando ci mette ad allenare -> di conseguenza vedi se fare multi run
+
+
+# Note
+- ho configurato il modello bert così che fosse compatibile con il train e eval loops usati di solito, per ci ho fatto ritornare i logits di intent e slots
+- 

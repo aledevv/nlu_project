@@ -20,9 +20,9 @@ base = {
 
 # Specific configs for the experiments
 experiments = [
-    {**base, 'hid_size': 200, 'emb_size': 300, 'lr': 1e-4, **flags}
+    {**base, 'hid_size': 200, 'emb_size': 300, 'lr': 1e-4,}
     for flags in [
-        # {'bidirectional': False, 'dropout': False, 'dropout_rate': 0.0, 'n_layers': 1}, # Vanilla
+        {}, # Vanilla
         # {'bidirectional': True, 'dropout': False, 'dropout_rate': 0.0, 'n_layers': 1},  # Bidirectional
         # {'bidirectional': False, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1},  # Just dropout
         # {'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1},   # bidirecitional and dropout
@@ -57,40 +57,44 @@ experiments = [
 
 if __name__ == "__main__":
     
-    # if len(experiments) == 0: #! SBLOCCA
-    #     print("NO experiments set")
-    #     quit()
+    if len(experiments) == 0: #! SBLOCCA
+        print("NO experiments set")
+        quit()
     
     # Initialize the list of results
     all_results = []
     experiment_idx=0
     
-    #for cfg in experiments: #! SBLOCCA
-        
-        # print(f"=== 🏁 Started experiment {experiment_idx+1} of {len(experiments)} ===") #! SBLOCCA
-        
-        
-        #train_loader, dev_loader, test_loader = get_dataloaders(train_dataset, dev_dataset, test_dataset, cfg)
     
-    train_dataset, dev_dataset, test_dataset = prepare_data(base)
-    train_loader, dev_loader, test_loader = create_data_loaders(base, train_dataset, dev_dataset, test_dataset)
     
-    loader = DataLoader(train_dataset, batch_size=2, shuffle=True)
+    for cfg in experiments:
+        
+        print(f"=== 🏁 Started experiment {experiment_idx+1} of {len(experiments)} ===")
+        
+        # * DATA SETUP
+        train_raw, dev_raw, test_raw = prepare_data(cfg)
+        
+        # Tokenizer BERT
+        tokenizer = load_tokenizer(base['bert_model'])
 
-    batch = next(iter(loader))
-    print("Batch keys:", batch.keys())
-    print("Batch input_ids shape:", batch['input_ids'].shape)
-    print("Batch slot_labels shape:", batch['slot_labels'].shape)
-    print("Batch intent_label:", batch['intent_label'])
-            
-            
-        # slot_f1s, intent_accs, all_tr, all_dev, all_ep = run_experiments( #! SBLOCCA
-        #     config=cfg,
-        #     model_class=ModelIAS,
-        #     data_loaders=(train_loader, dev_loader, test_loader),
-        #     lang=lang,
-        # )
+        # Costruisci mapping intent e slot
+        intent2id, slot2id = get_label_maps(train_raw + dev_raw + test_raw)
+
+        # Crea dataset BERT
+        train_dataset = BERTJointDataset(train_raw, tokenizer, intent2id, slot2id, max_len=cfg['max_len'])
+        dev_dataset   = BERTJointDataset(dev_raw,   tokenizer, intent2id, slot2id, max_len=cfg['max_len'])
+        test_dataset  = BERTJointDataset(test_raw,  tokenizer, intent2id, slot2id, max_len=cfg['max_len'])
         
-        # experiment_idx+=1 #! SBLOCCA
+        train_loader, dev_loader, test_loader = create_data_loaders(cfg, train_dataset, dev_dataset, test_dataset)
+
+        slot_f1s, intent_accs, all_tr, all_dev, all_ep = run_experiments(
+            config=cfg,
+            model_class=BertForJointIntentAndSlot,
+            data_loaders=(train_loader, dev_loader, test_loader),
+            lang=lang,
+        )
+        
+        experiment_idx+=1
+
 
 
