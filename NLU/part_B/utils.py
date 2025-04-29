@@ -54,6 +54,7 @@ class IntentsAndSlots (data.Dataset):
         self.unk = unk
         self.tokenizer = tokenizer
         self.max_len = max_len
+        self.lang = lang
         
         for x in dataset:
             self.utterances.append(x['utterance'])
@@ -83,9 +84,9 @@ class IntentsAndSlots (data.Dataset):
         ids = tokenized['input_ids'].squeeze() # Get the input ids
         attention_mask = tokenized['attention_mask'].squeeze() # Get the attention mask
         
-        aligned_labels = [lang.slot2id['0']] + [lang.slot2id['0']] + slots # Align the labels with the max length
+        aligned_labels = [self.lang.slot2id['0']] + [self.lang.slot2id['0']] + slots # Align the labels with the max length
         
-        aligned_labels.extend([lang.slot2id['pad']] * (len(ids) - len(aligned_labels)))
+        aligned_labels.extend([self.lang.slot2id['pad']] * (len(ids) - len(aligned_labels)))
         aligned_labels = aligned_labels[:len(ids)]  # Ensure alignment
             
         sample = {'utterance': ids, 'attention_mask': attention_mask, 'slots': torch.tensor(aligned_labels), 'intent': intent }

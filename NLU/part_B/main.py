@@ -1,6 +1,5 @@
 from functions import *
 import os
-os.environ["TOKENIZERS_PARALLELISM"] = "true"
 from transformers import BertTokenizerFast # Import BertTokenizer
 
 # 📦 Experiments configuration
@@ -38,8 +37,7 @@ if __name__ == "__main__":
     experiment_idx = 0
 
     tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased')  # Or bert-large-uncased
-    
-    lang, train_dataset, dev_dataset, test_dataset = prepare_data(cfg, tokenizer)  # Get tokenizer
+    lang, train_dataset, dev_dataset, test_dataset = prepare_data(base['cutoff'], tokenizer)  # Get tokenizer
 
     for cfg in experiments:
 

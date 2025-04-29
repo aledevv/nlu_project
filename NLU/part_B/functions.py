@@ -17,7 +17,7 @@ import shutil
 
 from transformers import BertConfig
 
-def prepare_data(config, tokenizer):
+def prepare_data(cutoff, tokenizer):
     tmp_train_raw, test_raw = load_ATIS()
     train_raw, dev_raw, test_raw = create_dev_set(tmp_train_raw, test_raw)
 
@@ -26,10 +26,10 @@ def prepare_data(config, tokenizer):
     slots = set(sum([line['slots'].split() for line in corpus], []))
     intents = set([line['intent'] for line in corpus])
 
-    lang = Lang(words, intents, slots, cutoff=config['cutoff'])
-    train_dataset = IntentsAndSlots(train_raw, lang, tokenizer)
-    dev_dataset = IntentsAndSlots(dev_raw, lang, tokenizer)
-    test_dataset = IntentsAndSlots(test_raw, lang, tokenizer)
+    lang = Lang(words, intents, slots, cutoff=cutoff)
+    train_dataset = IntentsAndSlots(train_raw, lang, tokenizer=tokenizer)
+    dev_dataset = IntentsAndSlots(dev_raw, lang, tokenizer=tokenizer)
+    test_dataset = IntentsAndSlots(test_raw, lang, tokenizer=tokenizer)
 
     return lang, train_dataset, dev_dataset, test_dataset  # Return tokenizer
 
@@ -48,7 +48,7 @@ def init_model(lang, config):
 
     return model, optimizer, criterion_slots, criterion_intents
 
-def train_loop(data_loader, optimizer, criterion_slots, criterion_intents, model, clip=5):
+def train_loop(data, optimizer, criterion_slots, criterion_intents, model, clip=5):
     model.train()
     loss_array = []
     for sample in data:
@@ -66,7 +66,7 @@ def train_loop(data_loader, optimizer, criterion_slots, criterion_intents, model
         optimizer.step() # Update the weights
     return loss_array
 
-def eval_loop(data_loader, criterion_slots, criterion_intents, model, lang, tokenizer):
+def eval_loop(data, criterion_slots, criterion_intents, model, lang, tokenizer):
     model.eval()
     loss_array = []
     
