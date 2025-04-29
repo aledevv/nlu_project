@@ -1,4 +1,6 @@
 from functions import *
+import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false
 from transformers import BertTokenizerFast # Import BertTokenizer
 
 # 📦 Experiments configuration
