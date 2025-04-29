@@ -1,23 +1,23 @@
 from functions import *
 import os
-os.environ["TOKENIZERS_PARALLELISM"] = "false
+os.environ["TOKENIZERS_PARALLELISM"] = "true"
 from transformers import BertTokenizerFast # Import BertTokenizer
 
 # 📦 Experiments configuration
 base = {
-    'batch_size_train': 16,  # Reduced batch size for BERT
-    'batch_size_eval': 32,
+    'batch_size_train': 64,  # Reduced batch size for BERT
+    'batch_size_eval': 128,
     'n_epochs': 50,         # Adjust as needed
     'clip': 1,              # Gradient clipping
     'runs': 1,              # Number of training runs
-    'patience': 5,          # Patience for early stopping
+    'patience': 3,          # Patience for early stopping
     'cutoff': 0,            # Cutoff for rare words (if used)
-    'lr': 2e-5,             # Learning rate (crucial for BERT)
+    'lr': 1e-4,             # Learning rate (crucial for BERT)
     'model_name': 'bert-base-uncased',  # Specify the BERT model
     # --- BERT-specific parameters (you can add more if needed) ---
     'bert_hidden_size': 768,  # Hidden size of BERT-base (adjust for -large)
     'bert_dropout_prob': 0.1,  # Dropout probability in BERT
-    'bert_max_len': 128       # Max sequence length for BERT
+    'bert_max_len': 50       # Max sequence length for BERT
 }
 
 # Specific configs for the experiments
@@ -38,12 +38,13 @@ if __name__ == "__main__":
     experiment_idx = 0
 
     tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased')  # Or bert-large-uncased
+    
+    lang, train_dataset, dev_dataset, test_dataset = prepare_data(cfg, tokenizer)  # Get tokenizer
 
     for cfg in experiments:
 
         print(f"=== 🏁 Started experiment {experiment_idx + 1} of {len(experiments)} ===")
 
-        lang, train_dataset, dev_dataset, test_dataset = prepare_data(cfg, tokenizer)  # Get tokenizer
         train_loader, dev_loader, test_loader = get_dataloaders(train_dataset, dev_dataset, test_dataset, cfg)
 
         slot_f1s, intent_accs, all_tr, all_dev, all_ep = run_experiments(
