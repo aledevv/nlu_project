@@ -35,11 +35,13 @@ if __name__ == "__main__":
     all_results = []
     experiment_idx = 0
 
+    tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased')  # Or bert-large-uncased
+
     for cfg in experiments:
 
         print(f"=== 🏁 Started experiment {experiment_idx + 1} of {len(experiments)} ===")
 
-        lang, train_dataset, dev_dataset, test_dataset, tokenizer = prepare_data(cfg)  # Get tokenizer
+        lang, train_dataset, dev_dataset, test_dataset = prepare_data(cfg, tokenizer)  # Get tokenizer
         train_loader, dev_loader, test_loader = get_dataloaders(train_dataset, dev_dataset, test_dataset, cfg)
 
         slot_f1s, intent_accs, all_tr, all_dev, all_ep = run_experiments(

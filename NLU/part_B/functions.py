@@ -15,9 +15,9 @@ import matplotlib.pyplot as plt
 import os
 import shutil
 
-from transformers import BertTokenizerFast, BertConfig, BertModel
+from transformers import BertConfig
 
-def prepare_data(config):
+def prepare_data(config, tokenizer):
     tmp_train_raw, test_raw = load_ATIS()
     train_raw, dev_raw, test_raw = create_dev_set(tmp_train_raw, test_raw)
 
@@ -27,12 +27,11 @@ def prepare_data(config):
     intents = set([line['intent'] for line in corpus])
 
     lang = Lang(words, intents, slots, cutoff=config['cutoff'])
-    tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased')  # Or bert-large-uncased
     train_dataset = IntentsAndSlots(train_raw, lang, tokenizer)
     dev_dataset = IntentsAndSlots(dev_raw, lang, tokenizer)
     test_dataset = IntentsAndSlots(test_raw, lang, tokenizer)
 
-    return lang, train_dataset, dev_dataset, test_dataset, tokenizer  # Return tokenizer
+    return lang, train_dataset, dev_dataset, test_dataset  # Return tokenizer
 
 def init_model(lang, config):
     config_bert = BertConfig.from_pretrained('bert-base-uncased')  # Or bert-large-uncased
@@ -44,7 +43,7 @@ def init_model(lang, config):
     ).to(device)
 
     optimizer = optim.AdamW(model.parameters(), lr=config['lr'])  # Use AdamW
-    criterion_slots = nn.CrossEntropyLoss(ignore_index=PAD_TOKEN)
+    criterion_slots = nn.CrossEntropyLoss(ignore_index=-100)
     criterion_intents = nn.CrossEntropyLoss()
 
     return model, optimizer, criterion_slots, criterion_intents
@@ -70,7 +69,7 @@ def train_loop(data_loader, optimizer, criterion_slots, criterion_intents, model
 
 def eval_loop(data_loader, criterion_slots, criterion_intents, model, lang, tokenizer):
     model.eval()
-    total_loss = 0
+    loss_array = []
     ref_intents = []
     hyp_intents = []
     ref_slots = []
@@ -85,65 +84,66 @@ def eval_loop(data_loader, criterion_slots, criterion_intents, model, lang, toke
 
             outputs = model(input_ids, attention_mask=attention_mask, intent_labels=intent_labels, slot_labels=slot_labels)
             loss = outputs[0]
-            total_loss += loss.item()
+            loss_array.append(loss.item())
 
             intent_logits, slot_logits = outputs[1], outputs[2]
 
             # Intent Evaluation
-            intent_preds = torch.argmax(intent_logits, axis=1).cpu().numpy()
-            intent_labels = intent_labels.cpu().numpy()
-            ref_intents.extend([lang.id2intent[i] for i in intent_labels])
+            intent_loss = criterion_intents(intent_logits, intent_labels) # Calcola la loss qui
+            slot_loss = criterion_slots(slot_logits.view(-1, slot_logits.size(-1)), slot_labels.view(-1)) # Calcola la loss qui
+
+            intent_preds = torch.argmax(intent_logits, dim=1).cpu().numpy()
+            intent_labels_np = intent_labels.cpu().numpy()
+            ref_intents.extend([lang.id2intent[i] for i in intent_labels_np])
             hyp_intents.extend([lang.id2intent[i] for i in intent_preds])
 
-            # Slot Evaluation (Handle Sub-word Tokenization!)
-            slot_preds = torch.argmax(slot_logits, axis=2).cpu().numpy()
-            slot_labels = slot_labels.cpu().numpy()
-            
+            # Slot Evaluation (Handle Sub-word Tokenization)
+            slot_preds = torch.argmax(slot_logits, dim=2).cpu().numpy()
+            slot_labels_np = slot_labels.cpu().numpy()
             input_ids_np = input_ids.cpu().numpy()
 
-            for i in range(len(slot_preds)):  # Loop through each sequence in the batch
-                
-                # Decode the input_ids to get tokens
+            for i in range(len(slot_preds)):
                 tokens = tokenizer.convert_ids_to_tokens(input_ids_np[i], skip_special_tokens=True)
-                
-                #  Align predictions and labels, considering sub-word tokenization
                 aligned_predictions = []
                 aligned_labels = []
-                
-                current_word_preds = []
-                current_word_labels = []
+                original_words = []
+                word_tokens = []
+                word_preds = []
+                word_labels = []
 
                 for j, token in enumerate(tokens):
-                     if token.startswith("##"):  # Part of a sub-word
-                         current_word_preds.append(lang.id2slot.get(slot_preds[i][j+1], 'O')) # +1 because of CLS token
-                         current_word_labels.append(lang.id2slot.get(slot_labels[i][j+1], 'O'))
-                     else:  # Start of a new word
-                         if current_word_preds:  # Process the previous word
-                             aligned_predictions.append(max(set(current_word_preds), key=current_word_preds.count))  # Or take the first, or any other strategy
-                             aligned_labels.append(max(set(current_word_labels), key=current_word_labels.count))
-                         current_word_preds = [lang.id2slot.get(slot_preds[i][j+1], 'O')]
-                         current_word_labels = [lang.id2slot.get(slot_labels[i][j+1], 'O')]
-                if current_word_preds:  # Process the last word
-                     aligned_predictions.append(max(set(current_word_preds), key=current_word_preds.count))
-                     aligned_labels.append(max(set(current_word_labels), key=current_word_labels.count))
+                    if not token.startswith("##"):
+                        if word_tokens:
+                            original_words.append(tokenizer.convert_tokens_to_string(word_tokens))
+                            # Take the most frequent label for the word
+                            aligned_predictions.append(max(set(word_preds), key=word_preds.count) if word_preds else 'O')
+                            aligned_labels.append(max(set(word_labels), key=word_labels.count) if word_labels else 'O')
+                        word_tokens = [token]
+                        word_preds = [lang.id2slot.get(slot_preds[i][j+1], 'O')] # +1 for CLS
+                        word_labels = [lang.id2slot.get(slot_labels_np[i][j+1], 'O')] # +1 for CLS
+                    else:
+                        word_tokens.append(token)
+                        word_preds.append(lang.id2slot.get(slot_preds[i][j+1], 'O')) # +1 for CLS
+                        word_labels.append(lang.id2slot.get(slot_labels_np[i][j+1], 'O')) # +1 for CLS
 
-                # Get original words
-                original_words = utterance[i].split() # TODO FIXME
+                if word_tokens:
+                    original_words.append(tokenizer.convert_tokens_to_string(word_tokens))
+                    aligned_predictions.append(max(set(word_preds), key=word_preds.count) if word_preds else 'O')
+                    aligned_labels.append(max(set(word_labels), key=word_labels.count) if word_labels else 'O')
 
-                # Ensure lengths match (handle potential tokenizer edge cases)
-                min_len = min(len(original_words), len(aligned_predictions), len(aligned_labels))
-                
-                ref_slots.append([(original_words[k], aligned_labels[k]) for k in range(min_len)])
-                hyp_slots.append([(original_words[k], aligned_predictions[k]) for k in range(min_len)])
-                
+                assert len(original_words) == len(aligned_predictions) == len(aligned_labels)
+
+                ref_slots.extend(list(zip(original_words, aligned_labels)))
+                hyp_slots.extend(list(zip(original_words, aligned_predictions)))
+
     try:
-        results = evaluate(ref_slots, hyp_slots)
+        results = evaluate(ref_slots, hyp_slots) # Usa la tua funzione evaluate globale
     except Exception as ex:
-        print("Warning:", ex)
+        print("Warning in slot evaluation:", ex)
         results = {"total": {"f": 0}}
 
     report_intent = classification_report(ref_intents, hyp_intents, zero_division=False, output_dict=True)
-    return results, report_intent, total_loss / len(data_loader)
+    return results, report_intent, loss_array
 
 
 def get_dataloaders(train_dataset, dev_dataset, test_dataset, config):
@@ -190,7 +190,7 @@ def run_experiments(config, model_class, data_loaders, lang, tokenizer):
         ).to(device)
 
         optimizer = torch.optim.Adam(model.parameters(), lr=config['lr'])
-        criterion_slots = torch.nn.CrossEntropyLoss(ignore_index=PAD_TOKEN)
+        criterion_slots = torch.nn.CrossEntropyLoss(ignore_index=-100)
         criterion_intents = torch.nn.CrossEntropyLoss()
 
         patience = config['patience']
@@ -231,7 +231,7 @@ def run_experiments(config, model_class, data_loaders, lang, tokenizer):
 
 
         # === Evaluation ===
-        results_test, intent_test, _ = eval_loop(test_loader, criterion_slots, criterion_intents, model, lang)
+        results_test, intent_test, _ = eval_loop(test_loader, criterion_slots, criterion_intents, model, lang, tokenizer)
         slot_f1s.append(results_test['total']['f'])
         intent_accs.append(intent_test['accuracy'])
 

@@ -34,4 +34,4 @@ class BertForIntentAndSlot(BertPreTrainedModel):
             loss = loss_intent + loss_slot
 
         output = (intent_logits, slot_logits) + outputs[2:]
-        return ((loss,) + output) if loss is not None else output
+        return ((loss,) + output) if loss is not None else output #! directly returns loss (intent + slots) if not None
