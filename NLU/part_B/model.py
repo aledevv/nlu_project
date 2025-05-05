@@ -5,21 +5,22 @@ from transformers.configuration_utils import PretrainedConfig
 
 class BertForIntentAndSlot(BertPreTrainedModel):
     def __init__(self, config: PretrainedConfig, num_intent_labels, num_slot_labels):
-        super().__init__(config)
-        self.bert = BertModel.from_pretrained("bert-base-uncased")
+        super(BertForIntentAndSlot, self).__init__(config)
+        self.bert = BertModel(config)
         
-        # Freeze BERT parameters if needed to make it a feature extractor (faster)
-        for param in self.bert.parameters():
-            param.requires_grad = False
+        # # Freeze BERT parameters if needed to make it a feature extractor (faster)
+        # for param in self.bert.parameters():
+        #     param.requires_grad = False
+            
+        self.num_intent_labels = num_intent_labels  # Store the number of intent labels
+        self.num_slot_labels = num_slot_labels    # Store the number of slot labels
         
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         self.intent_classifier = nn.Linear(config.hidden_size, num_intent_labels)
         self.slot_classifier = nn.Linear(config.hidden_size, num_slot_labels)
-        self.num_intent_labels = num_intent_labels  # Store the number of intent labels
-        self.num_slot_labels = num_slot_labels    # Store the number of slot labels
         self.init_weights()
 
-    def forward(self, input_ids, attenion_mask=None):
+    def forward(self, input_ids, attention_mask=None):
         outputs = self.bert(input_ids, attention_mask=attention_mask)
         sequence_output = outputs.last_hidden_state
         pooled_output = outputs.pooler_output

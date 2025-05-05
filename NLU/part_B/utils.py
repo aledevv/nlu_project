@@ -47,7 +47,7 @@ class Lang():
 
 class IntentsAndSlots (data.Dataset):
     # Mandatory methods are __init__, __len__ and __getitem__
-    def __init__(self, dataset, lang, unk='unk', tokenizer=None, max_len=150):
+    def __init__(self, dataset, lang, unk='unk', tokenizer=None, max_len=130):
         self.utterances = []
         self.intents = []
         self.slots = []
@@ -84,7 +84,7 @@ class IntentsAndSlots (data.Dataset):
         ids = tokenized['input_ids'].squeeze() # Get the input ids
         attention_mask = tokenized['attention_mask'].squeeze() # Get the attention mask
         
-        aligned_labels = [self.lang.slot2id['0']] + [self.lang.slot2id['0']] + slots # Align the labels with the max length
+        aligned_labels = [self.lang.slot2id['O']] + [self.lang.slot2id['O']] + slots # Align the labels with the max length
         
         aligned_labels.extend([self.lang.slot2id['pad']] * (len(ids) - len(aligned_labels)))
         aligned_labels = aligned_labels[:len(ids)]  # Ensure alignment
@@ -126,7 +126,7 @@ def load_ATIS():
     # pprint(tmp_train_raw[0])
     return tmp_train_raw, test_raw
     
-def create_dev_set(tmp_train_raw, test_raw):
+def create_dev_set(tmp_train_raw):
     portion = 0.10  # use 10% of training set
     
     intents = [x['intent'] for x in tmp_train_raw] # We stratify on intents
@@ -143,7 +143,7 @@ def create_dev_set(tmp_train_raw, test_raw):
         else:
             mini_train.append(tmp_train_raw[id_y])
     # Random Stratify
-    X_train, X_dev, y_train, y_dev = train_test_split(inputs, labels, test_size=portion, 
+    X_train, X_dev, intents_train, intents_dev = train_test_split(inputs, labels, test_size=portion, 
                                                         random_state=42, 
                                                         shuffle=True,
                                                         stratify=labels)
@@ -151,10 +151,10 @@ def create_dev_set(tmp_train_raw, test_raw):
     train_raw = X_train
     dev_raw = X_dev
 
-    y_test = [x['intent'] for x in test_raw]
+    #y_test = [x['intent'] for x in test_raw]
 
     
-    return train_raw, dev_raw, test_raw
+    return train_raw, intents_train, dev_raw, intents_dev
 
 def collate_fn(data):
     def merge(sequences):
@@ -181,16 +181,19 @@ def collate_fn(data):
         
     # We just need one length for packed pad seq, since len(utt) == len(slots)
     src_utt, _ = merge(new_item['utterance'])
+    attention_mask, _ = merge(new_item['attention_mask'])
     y_slots, y_lengths = merge(new_item["slots"])
     intent = torch.LongTensor(new_item["intent"])
     
     src_utt = src_utt.to(device) # We load the Tensor on our selected device
     y_slots = y_slots.to(device)
     intent = intent.to(device)
+    attention_mask = attention_mask.to(device)
     y_lengths = torch.LongTensor(y_lengths).to(device)
     
     new_item["utterances"] = src_utt
     new_item["intents"] = intent
+    new_item["attention_mask"] = attention_mask
     new_item["y_slots"] = y_slots
     new_item["slots_len"] = y_lengths
     return new_item

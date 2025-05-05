@@ -19,7 +19,9 @@ from transformers import BertConfig
 
 def prepare_data(cutoff, tokenizer):
     tmp_train_raw, test_raw = load_ATIS()
-    train_raw, dev_raw, test_raw = create_dev_set(tmp_train_raw, test_raw)
+    train_raw, train_intents, dev_raw, dev_intents = create_dev_set(tmp_train_raw)
+
+    test_intents = [x['intent'] for x in test_raw]
 
     words = sum([x['utterance'].split() for x in train_raw], [])
     corpus = train_raw + dev_raw + test_raw
@@ -27,130 +29,12 @@ def prepare_data(cutoff, tokenizer):
     intents = set([line['intent'] for line in corpus])
 
     lang = Lang(words, intents, slots, cutoff=cutoff)
+    slots.add('pad')  # Add padding token to the slots
     train_dataset = IntentsAndSlots(train_raw, lang, tokenizer=tokenizer)
     dev_dataset = IntentsAndSlots(dev_raw, lang, tokenizer=tokenizer)
     test_dataset = IntentsAndSlots(test_raw, lang, tokenizer=tokenizer)
 
     return lang, train_dataset, dev_dataset, test_dataset  # Return tokenizer
-
-def init_model(lang, config):
-    config_bert = BertConfig.from_pretrained('bert-base-uncased')  # Or bert-large-uncased
-    model = BertForIntentAndSlot.from_pretrained(
-        'bert-base-uncased',
-        config=config_bert,
-        num_intent_labels=len(lang.intent2id),
-        num_slot_labels=len(lang.slot2id)
-    ).to(device)
-
-    optimizer = optim.AdamW(model.parameters(), lr=config['lr'])  # Use AdamW
-    criterion_slots = nn.CrossEntropyLoss(ignore_index=PAD_TOKEN)
-    criterion_intents = nn.CrossEntropyLoss()
-
-    return model, optimizer, criterion_slots, criterion_intents
-
-def train_loop(data, optimizer, criterion_slots, criterion_intents, model, clip=5):
-    model.train()
-    loss_array = []
-    for sample in data:
-        optimizer.zero_grad() # Zeroing the gradient
-        sample = sample.to(device) # Move the sample to GPU
-        slots, intent = model(sample['utterances'], sample['attention_mask']) #! CHECK THIS
-        loss_intent = criterion_intents(intent, sample['intents'])
-        loss_slot = criterion_slots(slots, sample['y_slots'])
-        loss = loss_intent + loss_slot # In joint training we sum the losses. 
-                                       # Is there another way to do that?
-        loss_array.append(loss.item())
-        loss.backward() # Compute the gradient, deleting the computational graph
-        # clip the gradient to avoid exploding gradients
-        torch.nn.utils.clip_grad_norm_(model.parameters(), clip)  
-        optimizer.step() # Update the weights
-    return loss_array
-
-def eval_loop(data, criterion_slots, criterion_intents, model, lang, tokenizer):
-    model.eval()
-    loss_array = []
-    
-    ref_intents = []
-    hyp_intents = []
-    
-    ref_slots = []
-    hyp_slots = []
-    #softmax = nn.Softmax(dim=1) # Use Softmax if you need the actual probability
-    with torch.no_grad(): # It used to avoid the creation of computational graph
-        for sample in data:
-            sample = sample.to(device) # Move the sample to GPU
-            
-            slots, intents = model(sample['utterances'], sample['attention_mask']) #! CHECK THIS
-            loss_intent = criterion_intents(intents, sample['intents'])
-            loss_slot = criterion_slots(slots, sample['y_slots'])
-            loss = loss_intent + loss_slot 
-            loss_array.append(loss.item())
-            # Intent inference
-            # Get the highest probable class
-            out_intents = [lang.id2intent[x] 
-                           for x in torch.argmax(intents, dim=1).tolist()] 
-            gt_intents = [lang.id2intent[x] for x in sample['intents'].tolist()]
-            ref_intents.extend(gt_intents)
-            hyp_intents.extend(out_intents)
-            
-            # Slot inference 
-            output_slots = torch.argmax(slots, dim=1)
-            for id_seq, seq in enumerate(output_slots):
-                length = sample['slots_len'].tolist()[id_seq]
-                decoded_token = tokenizer.decode(sample['utterances'][id_seq]).split() # decoding the tokenized input and splitting it
-                # utt_ids = sample['utterance'][id_seq][:length].tolist()
-                gt_ids = sample['y_slots'][id_seq].tolist()
-                gt_slots = [lang.id2slot[elem] for elem in gt_ids[:length]]
-                gt_slots = gt_slots[1:] # Remove [CLS]
-                # utterance = [lang.id2word[elem] for elem in utt_ids]
-                to_decode = seq[1:length].tolist() # first element is [CLS] and last is [SEP]
-                
-                corrected_tokens = []
-
-                # TRICK seen in this repo: https://github.com/OmarFacchini/NLU-projects/blob/33eea109b1b7f852cec97bb2bfc383ca5e8be753/NLU/part_2/functions.py#L258
-                # Adjust tokenization to match original words, replacing extra tokens with 'O' (when there is a ')
-                for word in decoded_token:
-                    if "'" in word:
-                        parts = word.split("'")
-                        for part in parts[:-1]:
-                            corrected_tokens.append(part)
-                            corrected_tokens.append('O')
-                        corrected_tokens.append(parts[-1])
-                    else:
-                        corrected_tokens.append(word)
-
-                # Remove the first token ([CLS]) and the last token ([SEP])
-                corrected_tokens = corrected_tokens[1:-1]
-
-                # add padding tokens to ensure the length matches
-                while len(corrected_tokens) < len(gt_slots):
-                    corrected_tokens.append(lang.slot2id['pad'])
-                
-                ref_slots.append([(corrected_tokens[id_el], elem) for id_el, elem in enumerate(gt_slots)])
-                tmp_seq = []
-                for id_el, elem in enumerate(to_decode):
-                    tmp_seq.append((corrected_tokens[id_el], lang.id2slot[elem]))
-                hyp_slots.append(tmp_seq)
-    try:            
-        results = evaluate(ref_slots, hyp_slots)
-    except Exception as ex:
-        # Sometimes the model predicts a class that is not in REF
-        print("Warning:", ex)
-        ref_s = set([x[1] for x in ref_slots])
-        hyp_s = set([x[1] for x in hyp_slots])
-        print(hyp_s.difference(ref_s))
-        results = {"total":{"f":0}}
-        
-    report_intent = classification_report(ref_intents, hyp_intents, 
-                                          zero_division=False, output_dict=True)
-    return results, report_intent, loss_array
-
-
-def get_dataloaders(train_dataset, dev_dataset, test_dataset, config):
-    train_loader = DataLoader(train_dataset, batch_size=config['batch_size_train'], collate_fn=collate_fn, shuffle=True)
-    dev_loader = DataLoader(dev_dataset, batch_size=config['batch_size_eval'], collate_fn=collate_fn)
-    test_loader = DataLoader(test_dataset, batch_size=config['batch_size_eval'], collate_fn=collate_fn)
-    return train_loader, dev_loader, test_loader
 
 
 def run_experiments(config, model_class, data_loaders, lang, tokenizer):
@@ -263,3 +147,124 @@ def run_experiments(config, model_class, data_loaders, lang, tokenizer):
     shutil.rmtree(os.path.join(exp_dir, 'bin')) # Delete the folder 'bin/' with the weights of the runs
 
     return slot_f1s, intent_accs, all_losses_train, all_losses_dev, all_epochs
+
+
+def init_model(lang, config):
+    config_bert = BertConfig.from_pretrained('bert-base-uncased')  # Or bert-large-uncased
+    model = BertForIntentAndSlot.from_pretrained(
+        'bert-base-uncased',
+        config=config_bert,
+        num_intent_labels=len(lang.intent2id),
+        num_slot_labels=len(lang.slot2id)
+    ).to(device)
+
+    optimizer = optim.AdamW(model.parameters(), lr=config['lr'])  # Use AdamW
+    criterion_slots = nn.CrossEntropyLoss(ignore_index=PAD_TOKEN)
+    criterion_intents = nn.CrossEntropyLoss()
+
+    return model, optimizer, criterion_slots, criterion_intents
+
+def train_loop(data, optimizer, criterion_slots, criterion_intents, model, clip=5):
+    model.train()
+    loss_array = []
+    for sample in data:
+        optimizer.zero_grad() # Zeroing the gradient
+        sample = sample # Move the sample to GPU
+        intent, slots = model(sample['utterances'], sample['attention_mask']) #! CHECK THIS
+        loss_intent = criterion_intents(intent, sample['intents'])
+        loss_slot = criterion_slots(slots, sample['y_slots'])
+        loss = loss_intent + loss_slot # In joint training we sum the losses. 
+                                       # Is there another way to do that?
+        loss_array.append(loss.item())
+        loss.backward() # Compute the gradient, deleting the computational graph
+        # clip the gradient to avoid exploding gradients
+        torch.nn.utils.clip_grad_norm_(model.parameters(), clip)  
+        optimizer.step() # Update the weights
+    return loss_array
+
+def eval_loop(data, criterion_slots, criterion_intents, model, lang, tokenizer):
+    model.eval()
+    loss_array = []
+    
+    ref_intents = []
+    hyp_intents = []
+    
+    ref_slots = []
+    hyp_slots = []
+    #softmax = nn.Softmax(dim=1) # Use Softmax if you need the actual probability
+    with torch.no_grad(): # It used to avoid the creation of computational graph
+        for sample in data:
+            #sample = sample.to(device) # Move the sample to GPU
+            
+            intents, slots = model(sample['utterances'], sample['attention_mask']) #! CHECK THIS
+            loss_intent = criterion_intents(intents, sample['intents'])
+            loss_slot = criterion_slots(slots, sample['y_slots'])
+            loss = loss_intent + loss_slot 
+            loss_array.append(loss.item())
+            # Intent inference
+            # Get the highest probable class
+            out_intents = [lang.id2intent[x] 
+                           for x in torch.argmax(intents, dim=1).tolist()] 
+            gt_intents = [lang.id2intent[x] for x in sample['intents'].tolist()]
+            ref_intents.extend(gt_intents)
+            hyp_intents.extend(out_intents)
+            
+            # Slot inference 
+            output_slots = torch.argmax(slots, dim=1)
+            for id_seq, seq in enumerate(output_slots):
+                length = sample['slots_len'].tolist()[id_seq]
+                decoded_token = tokenizer.decode(sample['utterances'][id_seq]).split() # decoding the tokenized input and splitting it
+                # utt_ids = sample['utterance'][id_seq][:length].tolist()
+                gt_ids = sample['y_slots'][id_seq].tolist()
+                gt_slots = [lang.id2slot[elem] for elem in gt_ids[:length]]
+                gt_slots = gt_slots[1:] # Remove [CLS]
+                # utterance = [lang.id2word[elem] for elem in utt_ids]
+                to_decode = seq[1:length].tolist() # first element is [CLS] and last is [SEP]
+                
+                corrected_tokens = []
+
+                # TRICK seen in this repo: https://github.com/OmarFacchini/NLU-projects/blob/33eea109b1b7f852cec97bb2bfc383ca5e8be753/NLU/part_2/functions.py#L258
+                # Adjust tokenization to match original words, replacing extra tokens with 'O' (when there is a ')
+                for word in decoded_token:
+                    if "'" in word:
+                        parts = word.split("'")
+                        for part in parts[:-1]:
+                            corrected_tokens.append(part)
+                            corrected_tokens.append('O')
+                        corrected_tokens.append(parts[-1])
+                    else:
+                        corrected_tokens.append(word)
+
+                # Remove the first token ([CLS]) and the last token ([SEP])
+                corrected_tokens = corrected_tokens[1:-1]
+
+                # add padding tokens to ensure the length matches
+                while len(corrected_tokens) < len(gt_slots):
+                    corrected_tokens.append(lang.slot2id['pad'])
+                
+                ref_slots.append([(corrected_tokens[id_el], elem) for id_el, elem in enumerate(gt_slots)])
+                tmp_seq = []
+                for id_el, elem in enumerate(to_decode):
+                    tmp_seq.append((corrected_tokens[id_el], lang.id2slot[elem]))
+                hyp_slots.append(tmp_seq)
+    try:            
+        results = evaluate(ref_slots, hyp_slots)
+    except Exception as ex:
+        # Sometimes the model predicts a class that is not in REF
+        print("Warning:", ex)
+        ref_s = set([x[1] for x in ref_slots])
+        hyp_s = set([x[1] for x in hyp_slots])
+        print(hyp_s.difference(ref_s))
+        results = {"total":{"f":0}}
+        
+    report_intent = classification_report(ref_intents, hyp_intents, 
+                                          zero_division=False, output_dict=True)
+    return results, report_intent, loss_array
+
+
+def get_dataloaders(train_dataset, dev_dataset, test_dataset, config):
+    train_loader = DataLoader(train_dataset, batch_size=config['batch_size_train'], collate_fn=collate_fn, shuffle=True)
+    dev_loader = DataLoader(dev_dataset, batch_size=config['batch_size_eval'], collate_fn=collate_fn)
+    test_loader = DataLoader(test_dataset, batch_size=config['batch_size_eval'], collate_fn=collate_fn)
+    return train_loader, dev_loader, test_loader
+

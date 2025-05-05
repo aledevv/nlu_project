@@ -1,0 +1,14 @@
+{
+    "batch_size_train": 64,
+    "batch_size_eval": 128,
+    "n_epochs": 50,
+    "clip": 1,
+    "runs": 1,
+    "patience": 3,
+    "cutoff": 0,
+    "lr": 2e-05,
+    "model_name": "bert-base-uncased",
+    "bert_hidden_size": 768,
+    "bert_dropout_prob": 0.1,
+    "bert_max_len": 50
+}
