@@ -17,6 +17,85 @@ device = 'cuda:0'
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1" # Used to report errors on CUDA side
 PAD_TOKEN = 0
 
+import torch
+from torch.utils.data import Dataset
+from transformers import BertTokenizerFast
+
+class BertAtisDataset(Dataset):
+    def __init__(self, data, tokenizer, lang, max_len=128):
+        self.data = data
+        self.tokenizer = tokenizer
+        self.lang = lang
+        self.max_len = max_len
+
+        self.inputs = []
+        self.attention_masks = []
+        self.token_type_ids = []
+        self.slot_labels = []
+        self.intent_labels = []
+        self.slot_label_masks = []
+
+        self._preprocess()
+
+    def _preprocess(self):
+        for item in self.data:
+            words = item['utterance'].split()
+            slots = item['slots'].split()
+            intent = item['intent']
+
+            tokens = []
+            slot_label_ids = []
+            slot_mask = []
+
+            for word, slot_label in zip(words, slots):
+                word_tokens = self.tokenizer.tokenize(word)
+                if not word_tokens:
+                    word_tokens = [self.tokenizer.unk_token]
+
+                tokens.extend(word_tokens)
+                label_id = self.lang.slot2id.get(slot_label, self.lang.slot2id['pad'])
+                slot_label_ids.extend([label_id] + [self.lang.slot2id['pad']] * (len(word_tokens) - 1))
+                slot_mask.extend([1] + [0] * (len(word_tokens) - 1))
+
+            # Special tokens
+            tokens = [self.tokenizer.cls_token] + tokens + [self.tokenizer.sep_token]
+            slot_label_ids = [self.lang.slot2id['pad']] + slot_label_ids + [self.lang.slot2id['pad']]
+            slot_mask = [0] + slot_mask + [0]
+
+            # Convert to ids
+            input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
+            attention_mask = [1] * len(input_ids)
+            token_type_ids = [0] * len(input_ids)
+
+            # Padding
+            padding_length = self.max_len - len(input_ids)
+            input_ids += [self.tokenizer.pad_token_id] * padding_length
+            attention_mask += [0] * padding_length
+            token_type_ids += [0] * padding_length
+            slot_label_ids += [self.lang.slot2id['pad']] * padding_length
+            slot_mask += [0] * padding_length
+
+            self.inputs.append(input_ids)
+            self.attention_masks.append(attention_mask)
+            self.token_type_ids.append(token_type_ids)
+            self.slot_labels.append(slot_label_ids)
+            self.slot_label_masks.append(slot_mask)
+            self.intent_labels.append(self.lang.intent2id[intent])
+
+    def __len__(self):
+        return len(self.inputs)
+
+    def __getitem__(self, idx):
+        return {
+            'input_ids': torch.tensor(self.inputs[idx], dtype=torch.long),
+            'attention_mask': torch.tensor(self.attention_masks[idx], dtype=torch.long),
+            'token_type_ids': torch.tensor(self.token_type_ids[idx], dtype=torch.long),
+            'slot_labels': torch.tensor(self.slot_labels[idx], dtype=torch.long),
+            'slot_label_mask': torch.tensor(self.slot_label_masks[idx], dtype=torch.bool),
+            'intent_label': torch.tensor(self.intent_labels[idx], dtype=torch.long)
+        }
+
+
 class Lang():
     def __init__(self, words, intents, slots, cutoff=0):
         self.word2id = self.w2id(words, cutoff=cutoff, unk=True) # convert words into idices
@@ -29,7 +108,7 @@ class Lang():
     def w2id(self, elements, cutoff=None, unk=True):
         vocab = {'pad': PAD_TOKEN}      # add padding (to fill phrases of different length and make them equally long)
         if unk:
-            vocab['unk'] = len(vocab)   # add toke for unknown words (id = leng of vocab -> first available index, NOTE that you are increasing the vocab so every time you get a different id)
+            vocab['unk'] = len(vocab)   # add token for unknown words (id = leng of vocab -> first available index, NOTE that you are increasing the vocab so every time you get a different id)
         count = Counter(elements)   # get frequency of words
         for k, v in count.items():            # k = word, v = frequency (e.g. "Tony": 3 -> the word "Tony" has 3 occurences)
             if v > cutoff:  # * we consider in the vocabulary just the words having a frequency over the cutoff
@@ -47,14 +126,11 @@ class Lang():
 
 class IntentsAndSlots (data.Dataset):
     # Mandatory methods are __init__, __len__ and __getitem__
-    def __init__(self, dataset, lang, unk='unk', tokenizer=None, max_len=130):
+    def __init__(self, dataset, lang, unk='unk'):
         self.utterances = []
         self.intents = []
         self.slots = []
         self.unk = unk
-        self.tokenizer = tokenizer
-        self.max_len = max_len
-        self.lang = lang
         
         for x in dataset:
             self.utterances.append(x['utterance'])
@@ -69,27 +145,10 @@ class IntentsAndSlots (data.Dataset):
         return len(self.utterances)
 
     def __getitem__(self, idx):
-        # We need to tokenize the utterance and map it to the corresponding id
-        slots_ids = self.slot_ids[idx]
+        utt = torch.Tensor(self.utt_ids[idx])
+        slots = torch.Tensor(self.slot_ids[idx])
         intent = self.intent_ids[idx]
-        
-        words = self.utterances[idx].split()
-        slots = []
-        
-        for w, s in zip(words, slots_ids):
-            subwords = self.tokenizer.tokenize(w) # Tokenize the word
-            slots.extend([s] * len(subwords)) # Extend the slots list with the same slot id for each subword
-        
-        tokenized = self.tokenizer(self.utterances[idx], padding='max_length', truncation=True, max_length=self.max_len, return_tensors='pt')
-        ids = tokenized['input_ids'].squeeze() # Get the input ids
-        attention_mask = tokenized['attention_mask'].squeeze() # Get the attention mask
-        
-        aligned_labels = [self.lang.slot2id['O']] + [self.lang.slot2id['O']] + slots # Align the labels with the max length
-        
-        aligned_labels.extend([self.lang.slot2id['pad']] * (len(ids) - len(aligned_labels)))
-        aligned_labels = aligned_labels[:len(ids)]  # Ensure alignment
-            
-        sample = {'utterance': ids, 'attention_mask': attention_mask, 'slots': torch.tensor(aligned_labels), 'intent': intent }
+        sample = {'utterance': utt, 'slots': slots, 'intent': intent}
         return sample
     
     # Auxiliary methods
@@ -126,7 +185,7 @@ def load_ATIS():
     # pprint(tmp_train_raw[0])
     return tmp_train_raw, test_raw
     
-def create_dev_set(tmp_train_raw):
+def create_dev_set(tmp_train_raw, test_raw):
     portion = 0.10  # use 10% of training set
     
     intents = [x['intent'] for x in tmp_train_raw] # We stratify on intents
@@ -143,18 +202,15 @@ def create_dev_set(tmp_train_raw):
         else:
             mini_train.append(tmp_train_raw[id_y])
     # Random Stratify
-    X_train, X_dev, intents_train, intents_dev = train_test_split(inputs, labels, test_size=portion, 
+    X_train, X_dev, y_train, y_dev = train_test_split(inputs, labels, test_size=portion, 
                                                         random_state=42, 
                                                         shuffle=True,
                                                         stratify=labels)
     X_train.extend(mini_train)
     train_raw = X_train
     dev_raw = X_dev
-
-    #y_test = [x['intent'] for x in test_raw]
-
     
-    return train_raw, intents_train, dev_raw, intents_dev
+    return train_raw, dev_raw, test_raw
 
 def collate_fn(data):
     def merge(sequences):
@@ -181,23 +237,36 @@ def collate_fn(data):
         
     # We just need one length for packed pad seq, since len(utt) == len(slots)
     src_utt, _ = merge(new_item['utterance'])
-    attention_mask, _ = merge(new_item['attention_mask'])
     y_slots, y_lengths = merge(new_item["slots"])
     intent = torch.LongTensor(new_item["intent"])
     
     src_utt = src_utt.to(device) # We load the Tensor on our selected device
     y_slots = y_slots.to(device)
     intent = intent.to(device)
-    attention_mask = attention_mask.to(device)
     y_lengths = torch.LongTensor(y_lengths).to(device)
     
     new_item["utterances"] = src_utt
     new_item["intents"] = intent
-    new_item["attention_mask"] = attention_mask
     new_item["y_slots"] = y_slots
     new_item["slots_len"] = y_lengths
     return new_item
 
+def bert_collate_fn(batch):
+    input_ids = torch.stack([item['input_ids'] for item in batch])
+    attention_mask = torch.stack([item['attention_mask'] for item in batch])
+    token_type_ids = torch.stack([item['token_type_ids'] for item in batch])
+    slot_labels = torch.stack([item['slot_labels'] for item in batch])
+    slot_label_mask = torch.stack([item['slot_label_mask'] for item in batch])
+    intent_labels = torch.stack([item['intent_label'] for item in batch])
+
+    return {
+        'input_ids': input_ids.to(device),
+        'attention_mask': attention_mask.to(device),
+        'token_type_ids': token_type_ids.to(device),
+        'slot_labels': slot_labels.to(device),
+        'slot_label_mask': slot_label_mask.to(device),
+        'intent_labels': intent_labels.to(device)
+    }
 
 def save_loss_data_per_run(run_idx, run_epochs, run_train_losses, run_dev_losses, 
                            f1, acc, config, exp_dir):

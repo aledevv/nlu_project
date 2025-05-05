@@ -1,56 +1,56 @@
 from functions import *
-import os
-from transformers import BertTokenizerFast # Import BertTokenizer
+from utils import bert_collate_fn
+from bert_model import BERTIntentSlot
 
 # 📦 Experiments configuration
 base = {
-    'batch_size_train': 64,  # Reduced batch size for BERT
-    'batch_size_eval': 128,
-    'n_epochs': 50,         # Adjust as needed
-    'clip': 1,              # Gradient clipping
-    'runs': 1,              # Number of training runs
-    'patience': 3,          # Patience for early stopping
-    'cutoff': 0,            # Cutoff for rare words (if used)
-    'lr': 1e-4,             # Learning rate (crucial for BERT)
-    'model_name': 'bert-base-uncased',  # Specify the BERT model
-    # --- BERT-specific parameters (you can add more if needed) ---
-    'bert_hidden_size': 768,  # Hidden size of BERT-base (adjust for -large)
-    'bert_dropout_prob': 0.1,  # Dropout probability in BERT
-    'bert_max_len': 50       # Max sequence length for BERT
+    'batch_size_train': 16,
+    'batch_size_eval': 32,
+    'n_epochs': 10,
+    'clip': 1,
+    'runs': 1,
+    'patience': 2,
+    'cutoff': 0,
 }
 
-# Specific configs for the experiments
 experiments = [
-    {**base, 'lr': 2e-5, 'model_name': 'bert-base-uncased'} # Experiment with learning rate and model size
-    # Add more experiments as needed (e.g., different BERT models, learning rates)
+    {**base, 'lr': 5e-5}
 ]
 
-
 if __name__ == "__main__":
-
     if len(experiments) == 0:
         print("NO experiments set")
         quit()
 
-    # Initialize the list of results
     all_results = []
     experiment_idx = 0
 
-    tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased')  # Or bert-large-uncased
-    lang, train_dataset, dev_dataset, test_dataset = prepare_data(base['cutoff'], tokenizer)  # Get tokenizer
-
     for cfg in experiments:
+        print(f"=== 🏁 Started experiment {experiment_idx+1} of {len(experiments)} ===")
 
-        print(f"=== 🏁 Started experiment {experiment_idx + 1} of {len(experiments)} ===")
+        lang, train_dataset, dev_dataset, test_dataset = prepare_data(cfg)
 
-        train_loader, dev_loader, test_loader = get_dataloaders(train_dataset, dev_dataset, test_dataset, cfg)
+        train_loader = DataLoader(train_dataset, batch_size=cfg['batch_size_train'], shuffle=True, collate_fn=bert_collate_fn)
+        dev_loader = DataLoader(dev_dataset, batch_size=cfg['batch_size_eval'], collate_fn=bert_collate_fn)
+        test_loader = DataLoader(test_dataset, batch_size=cfg['batch_size_eval'], collate_fn=bert_collate_fn)
+
+        def model_factory():
+            return BERTIntentSlot(
+                model_name="bert-base-uncased",
+                num_intents=len(lang.intent2id),
+                num_slots=len(lang.slot2id)
+            ).to(device)
+
+        model = model_factory()
+        optimizer = torch.optim.AdamW(model.parameters(), lr=cfg['lr'])
+        criterion_slots = nn.CrossEntropyLoss(ignore_index=lang.slot2id['pad'])
+        criterion_intents = nn.CrossEntropyLoss()
 
         slot_f1s, intent_accs, all_tr, all_dev, all_ep = run_experiments(
             config=cfg,
-            model_class=BertForIntentAndSlot,  # Use the BERT model class
+            model_class=model_factory,
             data_loaders=(train_loader, dev_loader, test_loader),
             lang=lang,
-            tokenizer=tokenizer # Pass the tokenizer
         )
 
         experiment_idx += 1

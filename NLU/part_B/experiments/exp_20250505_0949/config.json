@@ -1,0 +1,10 @@
+{
+    "batch_size_train": 16,
+    "batch_size_eval": 32,
+    "n_epochs": 10,
+    "clip": 1,
+    "runs": 1,
+    "patience": 2,
+    "cutoff": 0,
+    "lr": 5e-05
+}
