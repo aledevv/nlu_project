@@ -288,7 +288,7 @@ def save_loss_data_per_run(run_idx, run_epochs, run_train_losses, run_dev_losses
 
     # 3. Annotazione a lato
     info = (
-        f"Hid: {config['hid_size']}, Emb: {config['emb_size']}, LR: {config['lr']}, Clip: {config['clip']}\n"
+        f"Dropout: {config['dropout']}, LR: {config['lr']}, Clip: {config['clip']}\n"
         f"F1: {round(f1, 3)}, Intent Acc: {round(acc, 3)}"
     )
     plt.text(1.02, 0.5, info, transform=plt.gca().transAxes,
@@ -327,15 +327,14 @@ def log_experiment_summary(timestamp, config, f1s, accs, exp_dir, summary_path="
     Logga in un file CSV globale le metriche dell'esperimento.
     """
     # Modifica l'header per includere tutte le nuove configurazioni
-    header = ['timestamp', 'hid_size', 'emb_size', 'lr', 'clip', 'runs', 'batch_size_train', 'batch_size_eval',
-              'n_epochs', 'patience', 'cutoff', 'bidirectional', 'dropout', 'dropout_rate', 'n_layers',
+    header = ['timestamp', 'lr', 'clip', 'runs', 'batch_size_train', 'batch_size_eval',
+              'n_epochs', 'patience', 'cutoff',
               'dev_f1_mean', 'dev_f1_std', 'dev_acc_mean', 'dev_acc_std', 'path']
     
     # Prepara la riga da scrivere nel CSV
     row = [
-        timestamp, config['hid_size'], config['emb_size'], config['lr'], config['clip'], config['runs'],
+        timestamp, config['lr'], config['clip'], config['runs'],
         config['batch_size_train'], config['batch_size_eval'], config['n_epochs'], config['patience'], config['cutoff'],
-        config['bidirectional'], config['dropout'], config['dropout_rate'], config['n_layers'],
         round(f1s.mean(), 3), round(f1s.std(), 3), round(accs.mean(), 3), round(accs.std(), 3), exp_dir
     ]
 

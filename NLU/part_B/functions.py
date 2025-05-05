@@ -7,13 +7,14 @@ from sklearn.metrics import classification_report
 import torch
 from torch.utils.data import DataLoader
 import torch.optim as optim
-from bert_model import *
+from model import *
 from tqdm import tqdm
 from datetime import datetime
 import json
 import matplotlib.pyplot as plt
 import os
 import shutil
+from datetime import datetime
 from transformers import BertTokenizerFast
 
 def prepare_data(config):
@@ -38,49 +39,41 @@ def prepare_data(config):
 
 def get_dataloaders(train_dataset, dev_dataset, test_dataset, config):
     train_loader = DataLoader(train_dataset, batch_size=config['batch_size_train'], collate_fn=collate_fn, shuffle=True)
-    dev_loader = DataLoader(dev_dataset, batch_size=config['batch_size_eval'], collate_fn=collate_fn)
+    dev_loader = DataLoader(dev_dataset, batch_size=config['batch_size_train'], collate_fn=collate_fn)
     test_loader = DataLoader(test_dataset, batch_size=config['batch_size_eval'], collate_fn=collate_fn)
     return train_loader, dev_loader, test_loader
 
 
-def init_model(lang, config):
-    model = ModelIAS(
-        config['hid_size'],
-        out_slot=len(lang.slot2id),
-        out_int=len(lang.intent2id),
-        emb_size=config['emb_size'],
-        vocab_len=len(lang.word2id),
-        pad_index=PAD_TOKEN
-    ).to(device)
-
-    model.apply(init_weights)
-
-    optimizer = optim.Adam(model.parameters(), lr=config['lr'])
-    criterion_slots = nn.CrossEntropyLoss(ignore_index=PAD_TOKEN)
-    criterion_intents = nn.CrossEntropyLoss()
-
-    return model, optimizer, criterion_slots, criterion_intents
-
-
-from utils import PAD_TOKEN
-
 def run_experiments(config, model_class, data_loaders, lang):
+    # === Init experiment folder ===
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+    exp_dir = os.path.join("experiments", f"exp_{timestamp}")
+    os.makedirs(exp_dir, exist_ok=True)
+    bin_dir = os.path.join(exp_dir, "bin")
+    os.makedirs(bin_dir, exist_ok=True)
+    
+    # Save config
+    with open(os.path.join(exp_dir, "config.json"), "w") as f:
+        json.dump(config, f, indent=4)
+    
     train_loader, dev_loader, test_loader = data_loaders
     all_losses_train, all_losses_dev, all_epochs = [], [], []
     slot_f1s, intent_accs = [], []
 
-    for run_idx in range(config['runs']):
-        print(f"\n🔁 Run {run_idx+1}/{config['runs']}")
+    for run_idx in tqdm(range(config['runs']), desc="🚀 Runs"):
 
         model = model_class().to(device)
-        optimizer = torch.optim.AdamW(model.parameters(), lr=config['lr'])
+        optimizer = torch.optim.Adam(model.parameters(), lr=config['lr'])
         criterion_slots = torch.nn.CrossEntropyLoss(ignore_index=lang.slot2id['pad'])
         criterion_intents = torch.nn.CrossEntropyLoss()
 
         best_f1 = 0
         patience = config['patience']
+        models_results = {}
         losses_train, losses_dev, sampled_epochs = [], [], []
 
+        # START TRAINING for the current run
+        print(f"🌀 Starting run {run_idx+1}/{config['runs']}")
         for epoch in range(1, config['n_epochs'] + 1):
             loss = train_loop(train_loader, optimizer, criterion_slots, criterion_intents, model)
 
@@ -91,25 +84,57 @@ def run_experiments(config, model_class, data_loaders, lang):
                 results_dev, intent_dev, loss_dev = eval_loop(dev_loader, criterion_slots, criterion_intents, model, lang)
                 losses_dev.append(sum(loss_dev)/len(loss_dev))
 
+
                 f1 = results_dev['total']['f']
                 acc = intent_dev['accuracy']
-                print(f"Epoch {epoch}: F1 = {f1:.4f}, Intent Acc = {acc:.4f}")
+                msg = f"📚 Epoch {epoch}/{config['n_epochs']} 🔍 Dev Slot-F1: {f1:.4f} Accuracy: {acc:.4f}"
 
                 if f1 > best_f1:
                     best_f1 = f1
+                    torch.save(model.state_dict(), os.path.join(bin_dir, f'best_{run_idx}.pt')) # ? if model is better
                     patience = config['patience']
-                    print("✅ New best F1! Resetting patience.")
+                    msg += "✅ New best F1! Resetting patience."
                 else:
                     patience -= 1
-                    print(f"⏳ No improvement. Patience left: {patience}")
+                    msg += f"⏳ No improvement. Patience left: {patience}"
 
+                print(msg)
+                
                 if patience <= 0:
                     print("🛑 Early stopping")
                     break
 
+        # === Evaluation ===
         results_test, intent_test, _ = eval_loop(test_loader, criterion_slots, criterion_intents, model, lang)
         slot_f1s.append(results_test['total']['f'])
         intent_accs.append(intent_test['accuracy'])
+        
+        # === Report of the current run ===
+        print(f"🧪 Test F1: {results_test['total']['f']:.4f}, Intent Accuracy: {intent_test['accuracy']:.4f}")
+        
+        # === Store model performance locally
+        models_results[run_idx]=results_test['total']['f']
+        
+        # === Save each run ===
+        save_loss_data_per_run(run_idx, sampled_epochs, losses_train, losses_dev,
+                               results_test['total']['f'], intent_test['accuracy'], config, exp_dir)
+
+        all_losses_train.append(losses_train)
+        all_losses_dev.append(losses_dev)
+        all_epochs.append(sampled_epochs)
+
+    # === Summary plot and log ===
+    plot_all_runs(all_losses_train, all_losses_dev, all_epochs, exp_dir)
+    log_experiment_summary(timestamp, config, np.array(slot_f1s), np.array(intent_accs), exp_dir)
+    
+    # === KEEP BEST MODEL ===
+    best_run_idx = max(models_results, key=models_results.get)
+
+    # Save the best template as best.pt
+    best_model_path = os.path.join(bin_dir, f'best_{best_run_idx}.pt')
+    best_model_save_path = os.path.join(exp_dir, 'best.pt')
+    shutil.copy(best_model_path, best_model_save_path) # Copy the best model to the experiment root folder as 'best.pt'
+    shutil.rmtree(os.path.join(exp_dir, 'bin')) # Delete the folder 'bin/' with the weights of the runs
 
     return slot_f1s, intent_accs, all_losses_train, all_losses_dev, all_epochs
 
