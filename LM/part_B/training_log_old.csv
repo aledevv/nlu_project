@@ -1,11 +1,1 @@
 Model ID, Hidden Size, Embedding Size, Learning Rate, Gradient Clip, Epochs, Patience, Dev PPL           , Final PPL         , Notes
-       1,         400,            300,           1  ,             5,    100,        3, 151.9610996362445 , 143.82735663611956, Vanilla [OVERFIT]
-       2,         400,            300,           1  ,             5,    100,        3, 152.77781727902146, 144.89229171699301, Vannilla (I forgot to set weight tying's flag)
-       3,         400,            300,           1  ,             5,    100,        3, 125.17648639518602, 119.94667660071607, " Weight Tying,"
-       4,         500,            500,           1  ,             5,    100,        3, 156.38665844682112, 143.40137486169505, Vanilla
-       5,         500,            500,           1  ,             5,    100,        3, 132.1381046438973 , 126.89642863663053, " Weight Tying,"
-       6,         400,            300,           0.1,             5,    100,        3, 164.3458999450238 , 159.01040958253563, "Vanilla GOOD TRAINING"
-       7,         400,            300,           0.1,             5,    100,        3, 200.05454910487805, 188.5164517103999 , " Weight Tying,[underfit]"
-       8,         400,            300,           0.1,             5,    100,        3, 164.35569769270523, 158.34456222019844, " Variational Dropout ,"
-9,400,300,1,5,100,3,150.7070384527516,144.32411097952553,"(Trying same but with higher LR) Variational Dropout,"
-10,400,300,1,5,100,3,130.95220469188024,124.1306853082955,"(first 2 techniques) Weight Tying, Variational Dropout,"

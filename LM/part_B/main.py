@@ -67,17 +67,23 @@ if __name__ == "__main__":
         tech_combinations = list(product(bools, repeat=3))  # (WT, VD, NT)
 
         # list of learning rates to test
-        learning_rates = [5.0, 3.0, 2.0, 1.0, 0.5, 0.1]
-
+        learning_rates = [5.0, 2.0, 1.0, 0.5, 0.1]
+        
+        total_combinations = len(tech_combinations) * len(learning_rates)
+        i=0
+        
         # * Loop through all combinations of techniques vaerying the learning rate
         for wt, vd, nt in tech_combinations:
             name = "vanilla" if not any([wt, vd, nt]) else f"WT={wt}_VD={vd}_NT={nt}"
             base_config["training_notes"] = name
             
+            if name == "vanilla":
+                continue
+            
             for lr in learning_rates:
                 config = base_config.copy()
                 config['lr'] = lr
-                print(f"\n🚀 Running experiment: {name} | lr={lr}")
+                print(f"\n🚀 Running experiment: {name} | lr={lr} - Experiment {i+1}/{total_combinations}")
                 run_experiment(config=config,
                             weight_tying=wt,
                             variational_dropout=vd,
@@ -85,18 +91,21 @@ if __name__ == "__main__":
                             train_dataset=train_dataset,
                             dev_dataset=dev_dataset,
                             test_dataset=test_dataset,
-                            lang=lang) 
+                            lang=lang)
+                i += 1
     
     if TEST_SIZE:
         # * For the best setting now we change embedding size and hidden size
         model_sizes = [(400, 300), (600, 600), (512, 300), (300, 512)]
+        total_combinations = len(model_sizes)
+        i=0
         
         for emb_size, hid_size in model_sizes:
             config = base_config.copy()
             config['emb_size'] = emb_size
             config['hid_size'] = hid_size
             config['lr']=0.1 #! TO BE SET
-            print(f"\n🚀 Running experiment: {name} | emb_size={emb_size} | hid_size={hid_size}")
+            print(f"\n🚀 Running experiment: {name} | emb_size={emb_size} | hid_size={hid_size} - Experiment {i+1}/{total_combinations}")
             run_experiment(config=config,
                         weight_tying=True,
                         variational_dropout=True,
@@ -105,10 +114,14 @@ if __name__ == "__main__":
                             dev_dataset=dev_dataset,
                             test_dataset=test_dataset,
                             lang=lang)
+            i += 1
             
     if TEST_BATCH:
         # * For the best setting now we change the batch size
         batch_sizes = [16, 32, 64, 128]
+        
+        total_combinations = len(batch_sizes)
+        i=0
         
         for batch_size in batch_sizes:
             config = base_config.copy()
@@ -116,7 +129,7 @@ if __name__ == "__main__":
             config['lr']=0.1 # ! SET
             config['emb_size'] = emb_size # ! SET
             config['hid_size'] = hid_size # ! SET
-            print(f"\n🚀 Running experiment: {name} | batch_size={batch_size}")
+            print(f"\n🚀 Running experiment: {name} | batch_size={batch_size} - Experiment {i+1}/{total_combinations}")
             run_experiment(config=config,
                         weight_tying=True,
                         variational_dropout=True,
@@ -125,3 +138,4 @@ if __name__ == "__main__":
                             dev_dataset=dev_dataset,
                             test_dataset=test_dataset,
                             lang=lang)
+            i += 1
