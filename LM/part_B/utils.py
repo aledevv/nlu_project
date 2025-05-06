@@ -248,3 +248,21 @@ def save_training_plot(losses_train, losses_dev, ppls_dev, filename="training_pl
     plt.savefig(filename)
     plt.close()  # Chiude la figura per liberare memoria
     print(f"Plot saved as: {filename}")
+
+import json
+
+STATE_FILE = "experiment_state.json"
+
+def load_state():
+    if os.path.exists(STATE_FILE):
+        with open(STATE_FILE, "r") as f:
+            return json.load(f)
+    return {
+        'completed': [],
+        'best_config': None,
+        'best_ppl': float('inf')
+    }
+
+def save_state(state):
+    with open(STATE_FILE, "w") as f:
+        json.dump(state, f, indent=4)

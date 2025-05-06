@@ -86,6 +86,7 @@ def run_experiment(config, weight_tying, variational_dropout, train_dataset, nt_
     model_id = want_to_save_model(best_model) # to choose whether to save the model
     save_training_plot(losses_train, losses_dev, ppls_dev, f"plots/training_plot_{model_id}.png")        
     save_log_csv(model_id, hid_size, emb_size, lr, clip, n_epochs, patience_init, ppl_dev, final_ppl, training_notes)
+    return final_ppl
 
 def train_loop(data, eval_data, optimizer, criterion, criterion_eval, model, clip=5, use_nt_avsgd=False, logging_interval=1, non_monotone_threshold=5):
     model.train()

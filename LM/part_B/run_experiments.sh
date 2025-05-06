@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH -p edu-medium
-#SBATCH -t 02:00:00
+#SBATCH -p edu-long
+#SBATCH -t 23:00:00
 #SBATCH --gres=gpu:1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
