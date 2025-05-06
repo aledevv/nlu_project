@@ -1,0 +1,11 @@
+{
+    "n_epochs": 10,
+    "clip": 1,
+    "runs": 3,
+    "patience": 3,
+    "cutoff": 0,
+    "batch_size_train": 32,
+    "batch_size_eval": 64,
+    "lr": 1e-05,
+    "dropout": 0.4
+}

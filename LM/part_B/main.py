@@ -11,11 +11,10 @@ import copy
 import curses
 import os
 import re
+import itertools
 from model import LM_LSTM
+from torch.utils.data import DataLoader
 
-# ! ***************************************************************************************************************************************************************
-# ! *************** DEVO RIPARTIRE DAL RISULTATO FINALE DELLA PARTE A, OPPURE SOLO IL PRIMO PUNTO (MODELLO LSTM)? [ATTUALMENTE HO FATTO IL SECONDO] ***************
-# ! ***************************************************************************************************************************************************************
 
 
 DEVICE = 'cuda'
@@ -26,9 +25,9 @@ hid_size = 400 #! MODIFY # default (400)
 emb_size = 300 #! MODIFY # default (300)
 
 lr = 1 #! MODIFY
-clip = 5 # Clip the gradient #? MODIFY (5)
+clip = 5 # Clip the gradient
 n_epochs = 100
-patience_init = 3 #? (3)
+patience_init = 3
 train_batch = 64 #? (64)
 
 #* regularizarion techniques to use
@@ -38,6 +37,21 @@ NMT_AvSGD = False
 
 training_notes = '(first 2 techniques)'  #TODO Notes that will be reported in the csv
 # * ------
+
+# EXPERIMENTS
+
+# -------------------- ESPERIMENTI COMPLETI --------------------
+
+configs = list(itertools.product(
+    [False, True],  # WEIGHT_TYING
+    [False, True],  # VARIATIONAL_DROPOUT
+    [False, True]   # NMT_AvSGD
+))
+
+batch_sizes = [32, 64, 128]
+learning_rates = [1.0, 0.5, 0.1]
+
+
 
 if __name__ == "__main__":
     #Wrtite the code to load the datasets and to run your functions
@@ -58,10 +72,6 @@ if __name__ == "__main__":
     dev_dataset = PennTreeBank(dev_raw, lang)
     test_dataset = PennTreeBank(test_raw, lang)
     
-    train_loader = DataLoader(train_dataset, batch_size=train_batch, collate_fn=partial(collate_fn, pad_token=lang.word2id["<pad>"]),  shuffle=True)
-    dev_loader = DataLoader(dev_dataset, batch_size=128, collate_fn=partial(collate_fn, pad_token=lang.word2id["<pad>"]))
-    test_loader = DataLoader(test_dataset, batch_size=128, collate_fn=partial(collate_fn, pad_token=lang.word2id["<pad>"]))
-    
     # * MODEL SETUP*
     vocab_len = len(lang.word2id)
     
@@ -76,51 +86,14 @@ if __name__ == "__main__":
     criterion_eval = nn.CrossEntropyLoss(ignore_index=lang.word2id["<pad>"], reduction='sum')
     
     # * TRAINING
-
     
-    losses_train = []
-    losses_dev = []
-    ppls_dev = []
-    sampled_epochs = []
-    best_ppl = math.inf
-    best_model = None
-    patience = patience_init
-    
-    if WEIGHT_TYING:
-        training_notes = training_notes + ' Weight Tying,'
-    if VARIATIONAL_DROPOUT:
-        training_notes = training_notes + ' Variational Dropout,'
-    if NMT_AvSGD:
-        training_notes = training_notes + ' Non-monotonically Triggered AvSGD,'
-    
-    print(f"hidden layers: {hid_size}, emb_size: {emb_size}, lr: {lr}, clip: {clip}, patience: {patience}, batch_size: {train_batch}, notes: {training_notes if training_notes != '' else 'None'}")
-    pbar = tqdm(range(1,n_epochs))
-    
-    #If the PPL is too high try to change the learning rate
-    for epoch in pbar:
-        loss = train_loop(train_loader, optimizer, criterion_train, model, clip)    
-        if epoch % 1 == 0:
-            sampled_epochs.append(epoch)
-            losses_train.append(np.asarray(loss).mean())
-            ppl_dev, loss_dev = eval_loop(dev_loader, criterion_eval, model)
-            losses_dev.append(np.asarray(loss_dev).mean())
-            ppls_dev.append(ppl_dev)
-            pbar.set_description("PPL: %f" % ppl_dev)
-            if  ppl_dev < best_ppl: # the lower, the better
-                best_ppl = ppl_dev
-                best_model = copy.deepcopy(model).to('cpu')
-                patience = 3
-            else:
-                patience -= 1
-                
-            if patience <= 0: # Early stopping with patience
-                break # Not nice but it keeps the code clean
-    
-
-    best_model.to(DEVICE)
-    final_ppl,  _ = eval_loop(test_loader, criterion_eval, best_model)    
-    print('Test ppl: ', final_ppl)
-    
-    model_id = want_to_save_model(best_model) # to choose whether to save the model
-    save_training_plot(losses_train, losses_dev, ppls_dev, f"plots/training_plot_{model_id}.png")        
-    save_log_csv(model_id, hid_size, emb_size, lr, clip, n_epochs, patience_init, ppl_dev, final_ppl, training_notes)
+    # First stage: all combinations regularization + batch + lr
+    for weight_tying, var_dropout, nmt_avg in configs:
+        for bsz in batch_sizes:
+            for lr_val in learning_rates:
+                run_experiment(weight_tying, var_dropout, nmt_avg, train_dataset, dev_dataset, test_dataset, train_batch=bsz, lr=lr_val)
+       
+    # Second stage: all regularizations + different combinations of hidden and embedding sizes         
+    final_configs = [(512, 300), (400, 400), (300, 200), (600, 600)]
+    for hid, emb in final_configs:
+        run_experiment(True, True, True, train_dataset, dev_dataset, test_dataset, train_batch=64, hid_size=hid, emb_size=emb, lr=1.0)
