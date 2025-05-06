@@ -211,7 +211,7 @@ def save_log_csv(model_id=0, hidden_size=None, emb_size=None, learning_rate=None
         writer.writerow(log_entry)
 
     # Stampa il log in formato tabellare
-    print("\nLog salvato con successo! 📊")
+    print("\nLog saved! 📊")
     print(tabulate([log_entry.values()], headers=fieldnames, tablefmt="grid"))
 
 
@@ -247,4 +247,4 @@ def save_training_plot(losses_train, losses_dev, ppls_dev, filename="training_pl
     # Salva il plot nel file specificato
     plt.savefig(filename)
     plt.close()  # Chiude la figura per liberare memoria
-    print(f"Plot salvato come {filename}")
+    print(f"Plot saved as: {filename}")

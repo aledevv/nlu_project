@@ -19,8 +19,8 @@ class VariationalDropout(nn.Module):
         return x * mask
 
 class LM_LSTM(nn.Module):
-    def __init__(self, emb_size, hidden_size, output_size, pad_index=0, out_dropout=0.1,
-                 emb_dropout=0.1, n_layers=1, use_weight_tying=False, use_variational_dropout=False):
+    def __init__(self, emb_size, hidden_size, output_size, pad_index=0, out_dropout=0.4,
+                 emb_dropout=0.3, n_layers=1, use_weight_tying=False, use_variational_dropout=False):
         super(LM_LSTM, self).__init__()
         # Token ids to vectors, we will better see this in the next lab
         self.embedding = nn.Embedding(output_size, emb_size, padding_idx=pad_index)
@@ -30,7 +30,12 @@ class LM_LSTM(nn.Module):
         self.pad_token = pad_index
         
         self.use_weight_tying = use_weight_tying
-        self.use_variational_dropout = use_variational_dropout   
+        self.use_variational_dropout = use_variational_dropout
+        
+        self.k = 0
+        self.t = 0
+        self.T = 0
+        self.logs = []
         
         #* Weight tying: https://github.com/pytorch/examples/blob/main/word_language_model/model.py#L31
         if self.use_weight_tying and hidden_size != emb_size:   #? If hidden size doesn't match embedding size we need to perform a (linear) mapping

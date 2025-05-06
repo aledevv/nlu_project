@@ -11,47 +11,35 @@ import copy
 import curses
 import os
 import re
-import itertools
 from model import LM_LSTM
-from torch.utils.data import DataLoader
-
-
+from itertools import product
 
 DEVICE = 'cuda'
-DEBUG = False
 
 # * HYPERPARAMETERS ------
-hid_size = 400 #! MODIFY # default (400)
-emb_size = 300 #! MODIFY # default (300)
-
-lr = 1 #! MODIFY
-clip = 5 # Clip the gradient
-n_epochs = 100
-patience_init = 3
-train_batch = 64 #? (64)
+base_config = {
+    'patience_init': 3,
+    'clip': 5,
+    'n_epochs': 100,
+    'training_notes': 'logging interval = 1 and non monotonic=5',
+    'train_batch': 32,
+    'lr': 1.0,
+    'emb_size': 400,
+    'hid_size': 400
+}
 
 #* regularizarion techniques to use
 WEIGHT_TYING = True                 
 VARIATIONAL_DROPOUT = True
-NMT_AvSGD = False
+NMT_AvSGD = True
 
-training_notes = '(first 2 techniques)'  #TODO Notes that will be reported in the csv
+
+# * KIND OF EXPERIMENTS ------
+TEST_LR = True
+TEST_SIZE = False
+TEST_BATCH = False
+
 # * ------
-
-# EXPERIMENTS
-
-# -------------------- ESPERIMENTI COMPLETI --------------------
-
-configs = list(itertools.product(
-    [False, True],  # WEIGHT_TYING
-    [False, True],  # VARIATIONAL_DROPOUT
-    [False, True]   # NMT_AvSGD
-))
-
-batch_sizes = [32, 64, 128]
-learning_rates = [1.0, 0.5, 0.1]
-
-
 
 if __name__ == "__main__":
     #Wrtite the code to load the datasets and to run your functions
@@ -72,28 +60,68 @@ if __name__ == "__main__":
     dev_dataset = PennTreeBank(dev_raw, lang)
     test_dataset = PennTreeBank(test_raw, lang)
     
-    # * MODEL SETUP*
-    vocab_len = len(lang.word2id)
     
-    if DEBUG:
-        DEVICE = 'cpu'
+    if TEST_LR:
+        # * TRAINING
+        bools = [False, True]
+        tech_combinations = list(product(bools, repeat=3))  # (WT, VD, NT)
+
+        # list of learning rates to test
+        learning_rates = [5.0, 3.0, 2.0, 1.0, 0.5, 0.1]
+
+        # * Loop through all combinations of techniques vaerying the learning rate
+        for wt, vd, nt in tech_combinations:
+            name = "vanilla" if not any([wt, vd, nt]) else f"WT={wt}_VD={vd}_NT={nt}"
+            base_config["training_notes"] = name
+            
+            for lr in learning_rates:
+                config = base_config.copy()
+                config['lr'] = lr
+                print(f"\n🚀 Running experiment: {name} | lr={lr}")
+                run_experiment(config=config,
+                            weight_tying=wt,
+                            variational_dropout=vd,
+                            nt_avsgd=nt,
+                            train_dataset=train_dataset,
+                            dev_dataset=dev_dataset,
+                            test_dataset=test_dataset,
+                            lang=lang) 
     
-    model = LM_LSTM(emb_size, hid_size, vocab_len, pad_index=lang.word2id["<pad>"], use_weight_tying=WEIGHT_TYING).to(DEVICE)
-    model.apply(init_weights)
-    
-    optimizer = optim.SGD(model.parameters(), lr=lr)
-    criterion_train = nn.CrossEntropyLoss(ignore_index=lang.word2id["<pad>"])
-    criterion_eval = nn.CrossEntropyLoss(ignore_index=lang.word2id["<pad>"], reduction='sum')
-    
-    # * TRAINING
-    
-    # First stage: all combinations regularization + batch + lr
-    for weight_tying, var_dropout, nmt_avg in configs:
-        for bsz in batch_sizes:
-            for lr_val in learning_rates:
-                run_experiment(weight_tying, var_dropout, nmt_avg, train_dataset, dev_dataset, test_dataset, train_batch=bsz, lr=lr_val)
-       
-    # Second stage: all regularizations + different combinations of hidden and embedding sizes         
-    final_configs = [(512, 300), (400, 400), (300, 200), (600, 600)]
-    for hid, emb in final_configs:
-        run_experiment(True, True, True, train_dataset, dev_dataset, test_dataset, train_batch=64, hid_size=hid, emb_size=emb, lr=1.0)
+    if TEST_SIZE:
+        # * For the best setting now we change embedding size and hidden size
+        model_sizes = [(400, 300), (600, 600), (512, 300), (300, 512)]
+        
+        for emb_size, hid_size in model_sizes:
+            config = base_config.copy()
+            config['emb_size'] = emb_size
+            config['hid_size'] = hid_size
+            config['lr']=0.1 #! TO BE SET
+            print(f"\n🚀 Running experiment: {name} | emb_size={emb_size} | hid_size={hid_size}")
+            run_experiment(config=config,
+                        weight_tying=True,
+                        variational_dropout=True,
+                            nt_avsgd=True,
+                            train_dataset=train_dataset,
+                            dev_dataset=dev_dataset,
+                            test_dataset=test_dataset,
+                            lang=lang)
+            
+    if TEST_BATCH:
+        # * For the best setting now we change the batch size
+        batch_sizes = [16, 32, 64, 128]
+        
+        for batch_size in batch_sizes:
+            config = base_config.copy()
+            config['train_batch'] = batch_size
+            config['lr']=0.1 # ! SET
+            config['emb_size'] = emb_size # ! SET
+            config['hid_size'] = hid_size # ! SET
+            print(f"\n🚀 Running experiment: {name} | batch_size={batch_size}")
+            run_experiment(config=config,
+                        weight_tying=True,
+                        variational_dropout=True,
+                            nt_avsgd=True,
+                            train_dataset=train_dataset,
+                            dev_dataset=dev_dataset,
+                            test_dataset=test_dataset,
+                            lang=lang)
