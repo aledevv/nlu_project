@@ -113,28 +113,32 @@ def run_experiments(config, model_class, data_loaders, lang):
         print(f"🧪 Test F1: {results_test['total']['f']:.4f}, Intent Accuracy: {intent_test['accuracy']:.4f}")
         
         # === Store model performance locally
-        models_results[run_idx]=results_test['total']['f']
+        models_results[run_idx] = {}
+        models_results[run_idx]["score"]=results_test['total']['f']+intent_test['accuracy']
+        models_results[run_idx]["intent_acc"]=intent_test['accuracy']
+        models_results[run_idx]["slot_f1"]=results_test['total']['f']
         
         # === Save each run ===
         save_loss_data_per_run(run_idx, sampled_epochs, losses_train, losses_dev,
-                               slot_f1s, intent_accs, config, exp_dir)
+                               results_test['total']['f'], intent_test['accuracy'], config, exp_dir)
 
         all_losses_train.append(losses_train)
         all_losses_dev.append(losses_dev)
         all_epochs.append(sampled_epochs)
 
-    # === Summary plot and log ===
-    plot_all_runs(all_losses_train, all_losses_dev, all_epochs, exp_dir)
-    log_experiment_summary(timestamp, config, np.array(slot_f1s), np.array(intent_accs), exp_dir)
     
     # === KEEP BEST MODEL ===
-    best_run_idx = max(models_results, key=models_results.get)
+    best_run_idx = max(models_results, key=lambda i: models_results[i]["score"])
 
     # Save the best template as best.pt
     best_model_path = os.path.join(bin_dir, f'best_{best_run_idx}.pt')
     best_model_save_path = os.path.join(exp_dir, 'best.pt')
     shutil.copy(best_model_path, best_model_save_path) # Copy the best model to the experiment root folder as 'best.pt'
     shutil.rmtree(os.path.join(exp_dir, 'bin')) # Delete the folder 'bin/' with the weights of the runs
+    
+    # === Summary plot and log ===
+    plot_all_runs(all_losses_train, all_losses_dev, all_epochs, exp_dir)
+    log_experiment_summary(timestamp, config, models_results[best_run_idx]["slot_f1"], models_results[best_run_idx]["intent_acc"], exp_dir) # save the summary of the best run
 
     return slot_f1s, intent_accs, all_losses_train, all_losses_dev, all_epochs
 

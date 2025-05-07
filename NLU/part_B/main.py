@@ -1,9 +1,12 @@
+import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+
 from functions import *
 from utils import bert_collate_fn
 from model import BERTIntentSlot
 from transformers.configuration_utils import PretrainedConfig
 import itertools
-import os
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
@@ -67,14 +70,14 @@ if __name__ == "__main__":
             criterion_slots = nn.CrossEntropyLoss(ignore_index=lang.slot2id['pad'])
             criterion_intents = nn.CrossEntropyLoss()
 
-            slot_f1s, intent_accs, all_tr, all_dev, all_ep = run_experiments(
+            best_slot_f1, best_intent_acc, all_tr, all_dev, all_ep = run_experiments(
                 config=cfg,
                 model_class=model_factory,
                 data_loaders=(train_loader, dev_loader, test_loader),
                 lang=lang,
             )
 
-            score = slot_f1s.mean()+intent_accs.mean()
+            score = best_slot_f1+best_intent_acc
 
             all_results.append({
                 'lr': cfg['lr'],

@@ -289,7 +289,7 @@ def save_loss_data_per_run(run_idx, run_epochs, run_train_losses, run_dev_losses
     # 3. Annotazione a lato
     info = (
         f"Dropout: {config['dropout']}, LR: {config['lr']}, Clip: {config['clip']}\n"
-        f"F1: {round(np.mean(f1), 3)}, Intent Acc: {round(np.mean(acc), 3)}"
+        f"F1: {round(f1, 3)}, Intent Acc: {round(acc, 3)}"
     )
     plt.text(1.02, 0.5, info, transform=plt.gca().transAxes,
              verticalalignment='center', fontsize=10,
@@ -322,20 +322,20 @@ def plot_all_runs(all_losses_train, all_losses_dev, all_epochs, exp_dir):
     plt.close()
 
 
-def log_experiment_summary(timestamp, config, f1s, accs, exp_dir, summary_path="experiments/summary.csv"):
+def log_experiment_summary(timestamp, config, f1, acc, exp_dir, summary_path="experiments/summary.csv"):
     """
     Logga in un file CSV globale le metriche dell'esperimento.
     """
     # Modifica l'header per includere tutte le nuove configurazioni
     header = ['timestamp', 'lr', 'dropout', 'clip', 'runs', 'batch_size_train', 'batch_size_eval',
               'n_epochs', 'patience', 'cutoff',
-              'dev_f1_mean', 'dev_f1_std', 'dev_acc_mean', 'dev_acc_std', 'path']
+              'dev_f1_mean', 'dev_acc_mean', 'path']
     
     # Prepara la riga da scrivere nel CSV
     row = [
         timestamp, config['lr'], config['dropout'], config['clip'], config['runs'],
         config['batch_size_train'], config['batch_size_eval'], config['n_epochs'], config['patience'], config['cutoff'],
-        round(f1s.mean(), 3), round(f1s.std(), 3), round(accs.mean(), 3), round(accs.std(), 3), exp_dir
+        round(f1, 3), round(acc, 3), exp_dir
     ]
 
     # Controlla se scrivere l'intestazione del file CSV

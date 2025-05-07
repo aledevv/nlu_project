@@ -1,0 +1,2 @@
+timestamp,lr,dropout,clip,runs,batch_size_train,batch_size_eval,n_epochs,patience,cutoff,dev_f1_mean,dev_acc_mean,path
+20250507_1904,1e-05,0.1,1,3,64,128,10,3,0,0.894,0.936,experiments/exp_20250507_1904
