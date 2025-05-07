@@ -15,7 +15,7 @@ import pandas as pd
 base = {
     'n_epochs': 10,
     'clip': 1,
-    'runs': 3,
+    'runs': 1,
     'patience': 3,
     'cutoff': 0,
 }

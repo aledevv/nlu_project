@@ -140,7 +140,7 @@ def run_experiments(config, model_class, data_loaders, lang):
     plot_all_runs(all_losses_train, all_losses_dev, all_epochs, exp_dir)
     log_experiment_summary(timestamp, config, models_results[best_run_idx]["slot_f1"], models_results[best_run_idx]["intent_acc"], exp_dir) # save the summary of the best run
 
-    return slot_f1s, intent_accs, all_losses_train, all_losses_dev, all_epochs
+    return models_results[best_run_idx]["slot_f1"], models_results[best_run_idx]["intent_acc"], all_losses_train, all_losses_dev, all_epochs
 
 
 
