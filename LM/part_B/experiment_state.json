@@ -1,0 +1,93 @@
+{
+    "completed": [
+        [
+            "TEST_LR",
+            "vanilla",
+            3.0
+        ],
+        [
+            "TEST_LR",
+            "vanilla",
+            2.0
+        ],
+        [
+            "TEST_LR",
+            "vanilla",
+            1.0
+        ],
+        [
+            "TEST_LR",
+            "vanilla",
+            0.5
+        ],
+        [
+            "TEST_LR",
+            "WT",
+            3.0
+        ],
+        [
+            "TEST_LR",
+            "WT",
+            2.0
+        ],
+        [
+            "TEST_LR",
+            "WT",
+            1.0
+        ],
+        [
+            "TEST_LR",
+            "WT",
+            0.5
+        ],
+        [
+            "TEST_LR",
+            "WT+VD",
+            3.0
+        ],
+        [
+            "TEST_LR",
+            "WT+VD",
+            2.0
+        ],
+        [
+            "TEST_LR",
+            "WT+VD",
+            1.0
+        ],
+        [
+            "TEST_LR",
+            "WT+VD",
+            0.5
+        ],
+        [
+            "TEST_LR",
+            "WT+VD+NT",
+            3.0
+        ],
+        [
+            "TEST_LR",
+            "WT+VD+NT",
+            2.0
+        ],
+        [
+            "TEST_LR",
+            "WT+VD+NT",
+            1.0
+        ]
+    ],
+    "best_config": {
+        "patience_init": 3,
+        "clip": 5,
+        "n_epochs": 100,
+        "training_notes": "WT+VD+NT",
+        "train_batch": 64,
+        "lr": 3.0,
+        "emb_size": 400,
+        "hid_size": 400,
+        "weight_tying": true,
+        "variational_dropout": true,
+        "nt_avsgd": true
+    },
+    "best_ppl": 96.34227579153445
+}

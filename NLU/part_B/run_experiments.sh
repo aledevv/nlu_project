@@ -1,12 +1,12 @@
 #!/bin/bash
-#SBATCH -p edu-medium
-#SBATCH -t 02:00:00
+#SBATCH -p edu-long
+#SBATCH -t 23:00:00
 #SBATCH --gres=gpu:1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH -N 1
-#SBATCH -o /home/alessandro.devidi/nlu_project/sbatch_out/experiments.out
-#SBATCH -e /home/alessandro.devidi/nlu_project/sbatch_out/experiments_err.out
+#SBATCH -o /home/alessandro.devidi/nlu_project/sbatch_out/bert_experiments.out
+#SBATCH -e /home/alessandro.devidi/nlu_project/sbatch_out/bert_experiments_err.out
 
 export PATH="/home/alessandro.devidi/miniconda3/bin:$PATH"
 eval "$(conda shell.bash hook)"

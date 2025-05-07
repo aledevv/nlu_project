@@ -1,0 +1,17 @@
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+huggingface/tokenizers: The current process just got forked, after parallelism has already been used. Disabling parallelism to avoid deadlocks...
+To disable this warning, you can either:
+	- Avoid using `tokenizers` before the fork if possible
+	- Explicitly set the environment variable TOKENIZERS_PARALLELISM=(true | false)
+🚀 Runs:   0%|          | 0/3 [00:00<?, ?it/s]🚀 Runs:   0%|          | 0/3 [02:29<?, ?it/s]
+Traceback (most recent call last):
+  File "/home/alessandro.devidi/nlu_project/NLU/part_B/main.py", line 70, in <module>
+    slot_f1s, intent_accs, all_tr, all_dev, all_ep = run_experiments(
+  File "/home/alessandro.devidi/nlu_project/NLU/part_B/functions.py", line 119, in run_experiments
+    save_loss_data_per_run(run_idx, sampled_epochs, losses_train, losses_dev,
+  File "/home/alessandro.devidi/nlu_project/NLU/part_B/utils.py", line 292, in save_loss_data_per_run
+    f"F1: {round(f1, 3)}, Intent Acc: {round(acc, 3)}"
+TypeError: type list doesn't define __round__ method

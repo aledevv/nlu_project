@@ -1,0 +1,12 @@
+ERROR: Unable to locate a modulefile for 'cuda'
+
+=== 🚀 Running grid for train=64 eval=128 ===
+=== 🏁 Experiment 1/16 ===
+Config: {'n_epochs': 10, 'clip': 1, 'runs': 3, 'patience': 3, 'cutoff': 0, 'batch_size_train': 64, 'batch_size_eval': 128, 'lr': 1e-05, 'dropout': 0.1}
+🌀 Starting run 1/3
+📚 Epoch 2/10 🔍 Dev Slot-F1: 0.7549 Accuracy: 0.9016✅ New best F1! Resetting patience.
+📚 Epoch 4/10 🔍 Dev Slot-F1: 0.8085 Accuracy: 0.9317✅ New best F1! Resetting patience.
+📚 Epoch 6/10 🔍 Dev Slot-F1: 0.8773 Accuracy: 0.9618✅ New best F1! Resetting patience.
+📚 Epoch 8/10 🔍 Dev Slot-F1: 0.9159 Accuracy: 0.9719✅ New best F1! Resetting patience.
+📚 Epoch 10/10 🔍 Dev Slot-F1: 0.9296 Accuracy: 0.9779✅ New best F1! Resetting patience.
+🧪 Test F1: 0.8968, Intent Accuracy: 0.9283

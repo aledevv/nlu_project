@@ -49,7 +49,7 @@ if __name__ == "__main__":
     best_config = state['best_config']
 
     if TEST_LR:
-        learning_rates = [5.0, 2.0, 1.0, 0.5]
+        learning_rates = [3.0, 2.0, 1.0, 0.5]
         technique_progression = [
             (False, False, False),        # Vanilla
             (True, False, False),         # + Weight Tying

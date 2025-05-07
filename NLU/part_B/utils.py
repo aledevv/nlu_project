@@ -327,13 +327,13 @@ def log_experiment_summary(timestamp, config, f1s, accs, exp_dir, summary_path="
     Logga in un file CSV globale le metriche dell'esperimento.
     """
     # Modifica l'header per includere tutte le nuove configurazioni
-    header = ['timestamp', 'lr', 'clip', 'runs', 'batch_size_train', 'batch_size_eval',
+    header = ['timestamp', 'lr', 'dropout', 'clip', 'runs', 'batch_size_train', 'batch_size_eval',
               'n_epochs', 'patience', 'cutoff',
               'dev_f1_mean', 'dev_f1_std', 'dev_acc_mean', 'dev_acc_std', 'path']
     
     # Prepara la riga da scrivere nel CSV
     row = [
-        timestamp, config['lr'], config['clip'], config['runs'],
+        timestamp, config['lr'], config['dropout'], config['clip'], config['runs'],
         config['batch_size_train'], config['batch_size_eval'], config['n_epochs'], config['patience'], config['cutoff'],
         round(f1s.mean(), 3), round(f1s.std(), 3), round(accs.mean(), 3), round(accs.std(), 3), exp_dir
     ]

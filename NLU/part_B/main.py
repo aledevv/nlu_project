@@ -77,17 +77,16 @@ if __name__ == "__main__":
             all_results.append({
                 'lr': cfg['lr'],
                 'dropout': cfg['dropout'],
-                'slot_f1_mean': round(np.mean(slot_f1s), 4),
-                'intent_acc_mean': round(np.mean(intent_accs), 4),
+                'score': round(np.mean(slot_f1s)+np.mean(intent_accs), 4),
             })
             experiment_idx += 1
 
         # Save heatmap
         df = pd.DataFrame(all_results)
-        heatmap_data = df.pivot(index="dropout", columns="lr", values="slot_f1_mean")
+        heatmap_data = df.pivot(index="dropout", columns="lr", values="score")
 
         plt.figure(figsize=(8, 6))
-        sns.heatmap(heatmap_data, annot=True, fmt=".2f", cmap="viridis", cbar_kws={'label': 'Slot F1'})
+        sns.heatmap(heatmap_data, annot=True, fmt=".2f", cmap="viridis", cbar_kws={'label': 'Slot F1 + Intent Acc'})
         plt.title(f"Slot F1 - Grid Search (Train={batch_cfg['batch_size_train']} Eval={batch_cfg['batch_size_eval']})")
         plt.xlabel("Learning Rate")
         plt.ylabel("Dropout")
