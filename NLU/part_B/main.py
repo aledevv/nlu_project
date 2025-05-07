@@ -74,10 +74,12 @@ if __name__ == "__main__":
                 lang=lang,
             )
 
+            score = slot_f1s.mean()+intent_accs.mean()
+
             all_results.append({
                 'lr': cfg['lr'],
                 'dropout': cfg['dropout'],
-                'score': round(np.mean(slot_f1s)+np.mean(intent_accs), 4),
+                'score': round(score, 4),
             })
             experiment_idx += 1
 
