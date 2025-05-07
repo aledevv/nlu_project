@@ -289,7 +289,7 @@ def save_loss_data_per_run(run_idx, run_epochs, run_train_losses, run_dev_losses
     # 3. Annotazione a lato
     info = (
         f"Dropout: {config['dropout']}, LR: {config['lr']}, Clip: {config['clip']}\n"
-        f"F1: {round(f1.mean(), 3)}, Intent Acc: {round(acc.mean(), 3)}"
+        f"F1: {round(np.mean(f1), 3)}, Intent Acc: {round(np.mean(acc), 3)}"
     )
     plt.text(1.02, 0.5, info, transform=plt.gca().transAxes,
              verticalalignment='center', fontsize=10,
