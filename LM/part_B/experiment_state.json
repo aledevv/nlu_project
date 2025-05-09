@@ -74,6 +74,39 @@
             "TEST_LR",
             "WT+VD+NT",
             1.0
+        ],
+        [
+            "TEST_LR",
+            "WT+VD+NT",
+            0.5
+        ],
+        [
+            "TEST_SIZE",
+            400,
+            300
+        ],
+        [
+            "TEST_SIZE",
+            600,
+            600
+        ],
+        [
+            "TEST_SIZE",
+            512,
+            300
+        ],
+        [
+            "TEST_SIZE",
+            300,
+            512
+        ],
+        [
+            "TEST_BATCH",
+            32
+        ],
+        [
+            "TEST_BATCH",
+            128
         ]
     ],
     "best_config": {
