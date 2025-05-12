@@ -1,0 +1,12 @@
+{
+    "model_name": "bert-large-uncased",
+    "n_epochs": 20,
+    "clip": 1,
+    "runs": 3,
+    "patience": 3,
+    "cutoff": 0,
+    "batch_size_train": 32,
+    "batch_size_eval": 64,
+    "lr": 5e-05,
+    "dropout": 0.2
+}

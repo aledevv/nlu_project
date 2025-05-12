@@ -37,7 +37,7 @@ experiments = [
         # {'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1, 'hid_size': 500, 'emb_size': 500, 'batch_size_train': 32, 'batch_size_train': 64,},
         # {'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1, 'hid_size': 200, 'emb_size': 500, 'batch_size_train': 64, 'batch_size_train': 128,},
         # {'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1, 'hid_size': 200, 'emb_size': 400, 'batch_size_train': 32, 'batch_size_train': 64,}
-        {'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1, 'hid_size': 300, 'emb_size': 500, 'batch_size_train': 64, 'batch_size_train': 128,},
+        {'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1, 'hid_size': 300, 'emb_size': 500, 'batch_size_train': 128, 'batch_size_eval': 64,},
 
         # # ? Extra experiments
         # {**base, 'hid_size': 200, 'emb_size': 300, 'lr': 1e-3, 'batch_size_train': 64, 'batch_size_eval': 64, 'bidirectional': True, 'dropout': True, 'dropout_rate': 0.1, 'n_layers': 1},

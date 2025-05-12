@@ -1,7 +1,7 @@
 
 
 # References
-- configura BERT per fine-tuning [qui](https://github.com/HalflingWizard/FA-Intent-Classification-and-Slot-Filling/blob/main/model/joint_model.py) e soprattutto [quii](https://github.com/monologg/JointBERT/blob/master/main.py)
+- Ho preso ispirazione da [qui](https://github.com/HalflingWizard/FA-Intent-Classification-and-Slot-Filling/blob/main/model/joint_model.py) e soprattutto [quii](https://github.com/monologg/JointBERT/blob/master/main.py)
 
 
 # 🔄 Migration from LSTM to BERT for Joint Intent Classification and Slot Filling
@@ -60,11 +60,9 @@ Each configuration was trained for multiple runs (2, otherwise it would take too
 
 ## 📈 Results Visualization
 
-After each grid search, we produced a heatmap plotting `Slot F1` scores with:
+After each grid search, we produced a heatmap plotting `Slot F1 + Intent Accuracy` scores with:
 - **Learning rate** on the x-axis
 - **Dropout rate** on the y-axis
-
-Each heatmap was saved as: experiments/grid_f1_train{train_batch}_eval{eval_batch}.png
 
 This allowed visual comparison of the effect of hyperparameters under different training settings.
 

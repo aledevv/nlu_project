@@ -1,95 +1,133 @@
 ERROR: Unable to locate a modulefile for 'cuda'
-=== 🏁 Started experiment 1 of 1 ===
-🌀 Starting run 1/3
-📚 Epoch 5/200 🔍 Dev Slot-F1: 0.3408 ✅ New best F1! Resetting patience.
-📚 Epoch 10/200 🔍 Dev Slot-F1: 0.6718 ✅ New best F1! Resetting patience.
-📚 Epoch 15/200 🔍 Dev Slot-F1: 0.8086 ✅ New best F1! Resetting patience.
-📚 Epoch 20/200 🔍 Dev Slot-F1: 0.8495 ✅ New best F1! Resetting patience.
-📚 Epoch 25/200 🔍 Dev Slot-F1: 0.8722 ✅ New best F1! Resetting patience.
-📚 Epoch 30/200 🔍 Dev Slot-F1: 0.8960 ✅ New best F1! Resetting patience.
-📚 Epoch 35/200 🔍 Dev Slot-F1: 0.9166 ✅ New best F1! Resetting patience.
-📚 Epoch 40/200 🔍 Dev Slot-F1: 0.9369 ✅ New best F1! Resetting patience.
-📚 Epoch 45/200 🔍 Dev Slot-F1: 0.9496 ✅ New best F1! Resetting patience.
-📚 Epoch 50/200 🔍 Dev Slot-F1: 0.9612 ✅ New best F1! Resetting patience.
-📚 Epoch 55/200 🔍 Dev Slot-F1: 0.9651 ✅ New best F1! Resetting patience.
-📚 Epoch 60/200 🔍 Dev Slot-F1: 0.9695 ✅ New best F1! Resetting patience.
-📚 Epoch 65/200 🔍 Dev Slot-F1: 0.9692 ⚠️ No improvement. Patience left: 2
-📚 Epoch 70/200 🔍 Dev Slot-F1: 0.9710 ✅ New best F1! Resetting patience.
-📚 Epoch 75/200 🔍 Dev Slot-F1: 0.9728 ✅ New best F1! Resetting patience.
-📚 Epoch 80/200 🔍 Dev Slot-F1: 0.9737 ✅ New best F1! Resetting patience.
-📚 Epoch 85/200 🔍 Dev Slot-F1: 0.9749 ✅ New best F1! Resetting patience.
-📚 Epoch 90/200 🔍 Dev Slot-F1: 0.9755 ✅ New best F1! Resetting patience.
-📚 Epoch 95/200 🔍 Dev Slot-F1: 0.9763 ✅ New best F1! Resetting patience.
-📚 Epoch 100/200 🔍 Dev Slot-F1: 0.9763 ⚠️ No improvement. Patience left: 2
-📚 Epoch 105/200 🔍 Dev Slot-F1: 0.9766 ✅ New best F1! Resetting patience.
-📚 Epoch 110/200 🔍 Dev Slot-F1: 0.9775 ✅ New best F1! Resetting patience.
-📚 Epoch 115/200 🔍 Dev Slot-F1: 0.9781 ✅ New best F1! Resetting patience.
-📚 Epoch 120/200 🔍 Dev Slot-F1: 0.9784 ✅ New best F1! Resetting patience.
-📚 Epoch 125/200 🔍 Dev Slot-F1: 0.9784 ✅ New best F1! Resetting patience.
-📚 Epoch 130/200 🔍 Dev Slot-F1: 0.9781 ⚠️ No improvement. Patience left: 2
-📚 Epoch 135/200 🔍 Dev Slot-F1: 0.9778 ⚠️ No improvement. Patience left: 1
-📚 Epoch 140/200 🔍 Dev Slot-F1: 0.9784 ⚠️ No improvement. Patience left: 0
-🛑 Early stopping triggered!
-🧪 Test F1: 0.9454, Intent Accuracy: 0.9518
-🌀 Starting run 2/3
-📚 Epoch 5/200 🔍 Dev Slot-F1: 0.3291 ✅ New best F1! Resetting patience.
-📚 Epoch 10/200 🔍 Dev Slot-F1: 0.6699 ✅ New best F1! Resetting patience.
-📚 Epoch 15/200 🔍 Dev Slot-F1: 0.8070 ✅ New best F1! Resetting patience.
-📚 Epoch 20/200 🔍 Dev Slot-F1: 0.8564 ✅ New best F1! Resetting patience.
-📚 Epoch 25/200 🔍 Dev Slot-F1: 0.8792 ✅ New best F1! Resetting patience.
-📚 Epoch 30/200 🔍 Dev Slot-F1: 0.9014 ✅ New best F1! Resetting patience.
-📚 Epoch 35/200 🔍 Dev Slot-F1: 0.9215 ✅ New best F1! Resetting patience.
-📚 Epoch 40/200 🔍 Dev Slot-F1: 0.9382 ✅ New best F1! Resetting patience.
-📚 Epoch 45/200 🔍 Dev Slot-F1: 0.9488 ✅ New best F1! Resetting patience.
-📚 Epoch 50/200 🔍 Dev Slot-F1: 0.9593 ✅ New best F1! Resetting patience.
-📚 Epoch 55/200 🔍 Dev Slot-F1: 0.9638 ✅ New best F1! Resetting patience.
-📚 Epoch 60/200 🔍 Dev Slot-F1: 0.9667 ✅ New best F1! Resetting patience.
-📚 Epoch 65/200 🔍 Dev Slot-F1: 0.9689 ✅ New best F1! Resetting patience.
-📚 Epoch 70/200 🔍 Dev Slot-F1: 0.9703 ✅ New best F1! Resetting patience.
-📚 Epoch 75/200 🔍 Dev Slot-F1: 0.9706 ✅ New best F1! Resetting patience.
-📚 Epoch 80/200 🔍 Dev Slot-F1: 0.9721 ✅ New best F1! Resetting patience.
-📚 Epoch 85/200 🔍 Dev Slot-F1: 0.9715 ⚠️ No improvement. Patience left: 2
-📚 Epoch 90/200 🔍 Dev Slot-F1: 0.9724 ✅ New best F1! Resetting patience.
-📚 Epoch 95/200 🔍 Dev Slot-F1: 0.9724 ✅ New best F1! Resetting patience.
-📚 Epoch 100/200 🔍 Dev Slot-F1: 0.9736 ✅ New best F1! Resetting patience.
-📚 Epoch 105/200 🔍 Dev Slot-F1: 0.9733 ⚠️ No improvement. Patience left: 2
-📚 Epoch 110/200 🔍 Dev Slot-F1: 0.9748 ✅ New best F1! Resetting patience.
-📚 Epoch 115/200 🔍 Dev Slot-F1: 0.9751 ✅ New best F1! Resetting patience.
-📚 Epoch 120/200 🔍 Dev Slot-F1: 0.9763 ✅ New best F1! Resetting patience.
-📚 Epoch 125/200 🔍 Dev Slot-F1: 0.9763 ⚠️ No improvement. Patience left: 2
-📚 Epoch 130/200 🔍 Dev Slot-F1: 0.9766 ✅ New best F1! Resetting patience.
-📚 Epoch 135/200 🔍 Dev Slot-F1: 0.9766 ⚠️ No improvement. Patience left: 2
-📚 Epoch 140/200 🔍 Dev Slot-F1: 0.9763 ⚠️ No improvement. Patience left: 1
-📚 Epoch 145/200 🔍 Dev Slot-F1: 0.9760 ⚠️ No improvement. Patience left: 0
-🛑 Early stopping triggered!
-🧪 Test F1: 0.9433, Intent Accuracy: 0.9462
-🌀 Starting run 3/3
-📚 Epoch 5/200 🔍 Dev Slot-F1: 0.3303 ✅ New best F1! Resetting patience.
-📚 Epoch 10/200 🔍 Dev Slot-F1: 0.6792 ✅ New best F1! Resetting patience.
-📚 Epoch 15/200 🔍 Dev Slot-F1: 0.8075 ✅ New best F1! Resetting patience.
-📚 Epoch 20/200 🔍 Dev Slot-F1: 0.8478 ✅ New best F1! Resetting patience.
-📚 Epoch 25/200 🔍 Dev Slot-F1: 0.8739 ✅ New best F1! Resetting patience.
-📚 Epoch 30/200 🔍 Dev Slot-F1: 0.9049 ✅ New best F1! Resetting patience.
-📚 Epoch 35/200 🔍 Dev Slot-F1: 0.9265 ✅ New best F1! Resetting patience.
-📚 Epoch 40/200 🔍 Dev Slot-F1: 0.9388 ✅ New best F1! Resetting patience.
-📚 Epoch 45/200 🔍 Dev Slot-F1: 0.9540 ✅ New best F1! Resetting patience.
-📚 Epoch 50/200 🔍 Dev Slot-F1: 0.9603 ✅ New best F1! Resetting patience.
-📚 Epoch 55/200 🔍 Dev Slot-F1: 0.9653 ✅ New best F1! Resetting patience.
-📚 Epoch 60/200 🔍 Dev Slot-F1: 0.9680 ✅ New best F1! Resetting patience.
-📚 Epoch 65/200 🔍 Dev Slot-F1: 0.9701 ✅ New best F1! Resetting patience.
-📚 Epoch 70/200 🔍 Dev Slot-F1: 0.9721 ✅ New best F1! Resetting patience.
-📚 Epoch 75/200 🔍 Dev Slot-F1: 0.9727 ✅ New best F1! Resetting patience.
-📚 Epoch 80/200 🔍 Dev Slot-F1: 0.9733 ✅ New best F1! Resetting patience.
-📚 Epoch 85/200 🔍 Dev Slot-F1: 0.9733 ⚠️ No improvement. Patience left: 2
-📚 Epoch 90/200 🔍 Dev Slot-F1: 0.9748 ✅ New best F1! Resetting patience.
-📚 Epoch 95/200 🔍 Dev Slot-F1: 0.9769 ✅ New best F1! Resetting patience.
-📚 Epoch 100/200 🔍 Dev Slot-F1: 0.9778 ✅ New best F1! Resetting patience.
-📚 Epoch 105/200 🔍 Dev Slot-F1: 0.9796 ✅ New best F1! Resetting patience.
-📚 Epoch 110/200 🔍 Dev Slot-F1: 0.9787 ⚠️ No improvement. Patience left: 2
-📚 Epoch 115/200 🔍 Dev Slot-F1: 0.9793 ⚠️ No improvement. Patience left: 1
-📚 Epoch 120/200 🔍 Dev Slot-F1: 0.9808 ✅ New best F1! Resetting patience.
-📚 Epoch 125/200 🔍 Dev Slot-F1: 0.9805 ⚠️ No improvement. Patience left: 2
-📚 Epoch 130/200 🔍 Dev Slot-F1: 0.9802 ⚠️ No improvement. Patience left: 1
-📚 Epoch 135/200 🔍 Dev Slot-F1: 0.9805 ⚠️ No improvement. Patience left: 0
-🛑 Early stopping triggered!
-🧪 Test F1: 0.9437, Intent Accuracy: 0.9429
+⏩ Skipping ('TEST_LR', 'vanilla', 3.0), already completed.
+⏩ Skipping ('TEST_LR', 'vanilla', 2.0), already completed.
+⏩ Skipping ('TEST_LR', 'vanilla', 1.0), already completed.
+⏩ Skipping ('TEST_LR', 'vanilla', 0.5), already completed.
+⏩ Skipping ('TEST_LR', 'WT', 3.0), already completed.
+⏩ Skipping ('TEST_LR', 'WT', 2.0), already completed.
+⏩ Skipping ('TEST_LR', 'WT', 1.0), already completed.
+⏩ Skipping ('TEST_LR', 'WT', 0.5), already completed.
+⏩ Skipping ('TEST_LR', 'WT+VD', 3.0), already completed.
+⏩ Skipping ('TEST_LR', 'WT+VD', 2.0), already completed.
+⏩ Skipping ('TEST_LR', 'WT+VD', 1.0), already completed.
+⏩ Skipping ('TEST_LR', 'WT+VD', 0.5), already completed.
+⏩ Skipping ('TEST_LR', 'WT+VD+NT', 3.0), already completed.
+⏩ Skipping ('TEST_LR', 'WT+VD+NT', 2.0), already completed.
+⏩ Skipping ('TEST_LR', 'WT+VD+NT', 1.0), already completed.
+
+🚀 [TEST_LR] Running experiment: WT+VD+NT | lr=0.5 - 1/16
+Applying weight tying
+Applying variational dropout
+Using Non-monotonically Triggered AvSGD (NT-AvSGD)
+hidden layers: 400, emb_size: 400, lr: 0.5, clip: 5, patience: 3, batch_size: 64, notes: WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD,
+Test ppl:  111.46285806452248
+Model saved at: bin/model_18.pt
+Plot saved as: plots/training_plot_18.png
+
+Log saved! 📊
++------------+---------------+------------------+-----------------+-----------------+----------+------------+-----------+-------------+--------------------------------------------------------------------------------+
+|   Model ID |   Hidden Size |   Embedding Size |   Learning Rate |   Gradient Clip |   Epochs |   Patience |   Dev PPL |   Final PPL | Notes                                                                          |
++============+===============+==================+=================+=================+==========+============+===========+=============+================================================================================+
+|         18 |           400 |              400 |             0.5 |               5 |      100 |          3 |    114.81 |     111.463 | WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD, |
++------------+---------------+------------------+-----------------+-----------------+----------+------------+-----------+-------------+--------------------------------------------------------------------------------+
+
+🚀 [TEST_SIZE] Running: emb=400, hid=300 - 1/4
+Applying weight tying
+Applying variational dropout
+Using Non-monotonically Triggered AvSGD (NT-AvSGD)
+hidden layers: 300, emb_size: 400, lr: 3.0, clip: 5, patience: 3, batch_size: 64, notes: WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD,
+Test ppl:  106.31436188780172
+Model saved at: bin/model_19.pt
+Plot saved as: plots/training_plot_19.png
+
+Log saved! 📊
++------------+---------------+------------------+-----------------+-----------------+----------+------------+-----------+-------------+--------------------------------------------------------------------------------+
+|   Model ID |   Hidden Size |   Embedding Size |   Learning Rate |   Gradient Clip |   Epochs |   Patience |   Dev PPL |   Final PPL | Notes                                                                          |
++============+===============+==================+=================+=================+==========+============+===========+=============+================================================================================+
+|         19 |           300 |              400 |               3 |               5 |      100 |          3 |   110.098 |     106.314 | WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD, |
++------------+---------------+------------------+-----------------+-----------------+----------+------------+-----------+-------------+--------------------------------------------------------------------------------+
+
+🚀 [TEST_SIZE] Running: emb=600, hid=600 - 2/4
+Applying weight tying
+Applying variational dropout
+Using Non-monotonically Triggered AvSGD (NT-AvSGD)
+hidden layers: 600, emb_size: 600, lr: 3.0, clip: 5, patience: 3, batch_size: 64, notes: WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD,
+Test ppl:  99.42696285323514
+Model saved at: bin/model_20.pt
+Plot saved as: plots/training_plot_20.png
+
+Log saved! 📊
++------------+---------------+------------------+-----------------+-----------------+----------+------------+-----------+-------------+--------------------------------------------------------------------------------+
+|   Model ID |   Hidden Size |   Embedding Size |   Learning Rate |   Gradient Clip |   Epochs |   Patience |   Dev PPL |   Final PPL | Notes                                                                          |
++============+===============+==================+=================+=================+==========+============+===========+=============+================================================================================+
+|         20 |           600 |              600 |               3 |               5 |      100 |          3 |   102.843 |      99.427 | WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD, |
++------------+---------------+------------------+-----------------+-----------------+----------+------------+-----------+-------------+--------------------------------------------------------------------------------+
+
+🚀 [TEST_SIZE] Running: emb=512, hid=300 - 3/4
+Applying weight tying
+Applying variational dropout
+Using Non-monotonically Triggered AvSGD (NT-AvSGD)
+hidden layers: 300, emb_size: 512, lr: 3.0, clip: 5, patience: 3, batch_size: 64, notes: WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD,
+Test ppl:  107.64824343237842
+Model saved at: bin/model_21.pt
+Plot saved as: plots/training_plot_21.png
+
+Log saved! 📊
++------------+---------------+------------------+-----------------+-----------------+----------+------------+-----------+-------------+--------------------------------------------------------------------------------+
+|   Model ID |   Hidden Size |   Embedding Size |   Learning Rate |   Gradient Clip |   Epochs |   Patience |   Dev PPL |   Final PPL | Notes                                                                          |
++============+===============+==================+=================+=================+==========+============+===========+=============+================================================================================+
+|         21 |           300 |              512 |               3 |               5 |      100 |          3 |   121.602 |     107.648 | WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD, |
++------------+---------------+------------------+-----------------+-----------------+----------+------------+-----------+-------------+--------------------------------------------------------------------------------+
+
+🚀 [TEST_SIZE] Running: emb=300, hid=512 - 4/4
+Applying weight tying
+Applying variational dropout
+Using Non-monotonically Triggered AvSGD (NT-AvSGD)
+hidden layers: 512, emb_size: 300, lr: 3.0, clip: 5, patience: 3, batch_size: 64, notes: WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD,
+Test ppl:  2693417126774.0103
+Model saved at: bin/model_22.pt
+Plot saved as: plots/training_plot_22.png
+
+Log saved! 📊
++------------+---------------+------------------+-----------------+-----------------+----------+------------+-------------+-------------+--------------------------------------------------------------------------------+
+|   Model ID |   Hidden Size |   Embedding Size |   Learning Rate |   Gradient Clip |   Epochs |   Patience |     Dev PPL |   Final PPL | Notes                                                                          |
++============+===============+==================+=================+=================+==========+============+=============+=============+================================================================================+
+|         22 |           512 |              300 |               3 |               5 |      100 |          3 | 2.22814e+18 | 2.69342e+12 | WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD, |
++------------+---------------+------------------+-----------------+-----------------+----------+------------+-------------+-------------+--------------------------------------------------------------------------------+
+
+🚀 [TEST_BATCH] Running: batch_size=32 - 1/2
+Applying weight tying
+Applying variational dropout
+Using Non-monotonically Triggered AvSGD (NT-AvSGD)
+hidden layers: 400, emb_size: 400, lr: 3.0, clip: 5, patience: 3, batch_size: 32, notes: WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD,
+Test ppl:  94.3721097621092
+Model saved at: bin/model_23.pt
+Plot saved as: plots/training_plot_23.png
+
+Log saved! 📊
++------------+---------------+------------------+-----------------+-----------------+----------+------------+-----------+-------------+--------------------------------------------------------------------------------+
+|   Model ID |   Hidden Size |   Embedding Size |   Learning Rate |   Gradient Clip |   Epochs |   Patience |   Dev PPL |   Final PPL | Notes                                                                          |
++============+===============+==================+=================+=================+==========+============+===========+=============+================================================================================+
+|         23 |           400 |              400 |               3 |               5 |      100 |          3 |   96.8868 |     94.3721 | WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD, |
++------------+---------------+------------------+-----------------+-----------------+----------+------------+-----------+-------------+--------------------------------------------------------------------------------+
+
+🚀 [TEST_BATCH] Running: batch_size=128 - 2/2
+Applying weight tying
+Applying variational dropout
+Using Non-monotonically Triggered AvSGD (NT-AvSGD)
+hidden layers: 400, emb_size: 400, lr: 3.0, clip: 5, patience: 3, batch_size: 128, notes: WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD,
+Test ppl:  99.35185547363702
+Model saved at: bin/model_24.pt
+Plot saved as: plots/training_plot_24.png
+
+Log saved! 📊
++------------+---------------+------------------+-----------------+-----------------+----------+------------+-----------+-------------+--------------------------------------------------------------------------------+
+|   Model ID |   Hidden Size |   Embedding Size |   Learning Rate |   Gradient Clip |   Epochs |   Patience |   Dev PPL |   Final PPL | Notes                                                                          |
++============+===============+==================+=================+=================+==========+============+===========+=============+================================================================================+
+|         24 |           400 |              400 |               3 |               5 |      100 |          3 |   102.461 |     99.3519 | WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD, |
++------------+---------------+------------------+-----------------+-----------------+----------+------------+-----------+-------------+--------------------------------------------------------------------------------+
+
+🏁 Esperimenti completati.
+🔧 Miglior configurazione finale:
+{'patience_init': 3, 'clip': 5, 'n_epochs': 100, 'training_notes': 'WT+VD+NT', 'train_batch': 64, 'lr': 3.0, 'emb_size': 400, 'hid_size': 400, 'weight_tying': True, 'variational_dropout': True, 'nt_avsgd': True}
+📉 Perplexity: 96.34227579153445

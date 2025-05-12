@@ -13,9 +13,10 @@ import pandas as pd
 
 # 💼 Base config
 base = {
-    'n_epochs': 10,
+    'model_name': 'bert-large-uncased', # or 'bert-base-uncased'
+    'n_epochs': 20,
     'clip': 1,
-    'runs': 1,
+    'runs': 3,
     'patience': 3,
     'cutoff': 0,
 }
@@ -59,7 +60,7 @@ if __name__ == "__main__":
 
             def model_factory():
                 return BERTIntentSlot(
-                    model_name="bert-base-uncased",
+                    model_name=cfg['model_name'],
                     num_intents=len(lang.intent2id),
                     num_slots=len(lang.slot2id),
                     dropout_prob=cfg['dropout'],
