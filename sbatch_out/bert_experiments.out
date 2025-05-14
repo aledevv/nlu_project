@@ -3,3 +3,41 @@ ERROR: Unable to locate a modulefile for 'cuda'
 === 🚀 Running grid for train=16 eval=32 ===
 === 🏁 Experiment 1/16 ===
 Config: {'model_name': 'bert-large-uncased', 'n_epochs': 20, 'clip': 1, 'runs': 3, 'patience': 3, 'cutoff': 0, 'batch_size_train': 16, 'batch_size_eval': 32, 'lr': 1e-05, 'dropout': 0.1}
+🌀 Starting run 1/3
+📚 Epoch 2/20 🔍 Dev Slot-F1: 0.9113 Accuracy: 0.9819✅ New best F1! Resetting patience.
+📚 Epoch 4/20 🔍 Dev Slot-F1: 0.9571 Accuracy: 0.9900✅ New best F1! Resetting patience.
+📚 Epoch 6/20 🔍 Dev Slot-F1: 0.9732 Accuracy: 0.9920✅ New best F1! Resetting patience.
+📚 Epoch 8/20 🔍 Dev Slot-F1: 0.9785 Accuracy: 0.9940✅ New best F1! Resetting patience.
+📚 Epoch 10/20 🔍 Dev Slot-F1: 0.9808 Accuracy: 0.9859✅ New best F1! Resetting patience.
+📚 Epoch 12/20 🔍 Dev Slot-F1: 0.9811 Accuracy: 0.9960✅ New best F1! Resetting patience.
+📚 Epoch 14/20 🔍 Dev Slot-F1: 0.9817 Accuracy: 0.9940✅ New best F1! Resetting patience.
+📚 Epoch 16/20 🔍 Dev Slot-F1: 0.9826 Accuracy: 0.9960✅ New best F1! Resetting patience.
+📚 Epoch 18/20 🔍 Dev Slot-F1: 0.9840 Accuracy: 0.9920✅ New best F1! Resetting patience.
+📚 Epoch 20/20 🔍 Dev Slot-F1: 0.9841 Accuracy: 0.9920✅ New best F1! Resetting patience.
+🧪 Test F1: 0.9586, Intent Accuracy: 0.9709
+🌀 Starting run 2/3
+📚 Epoch 2/20 🔍 Dev Slot-F1: 0.9261 Accuracy: 0.9779✅ New best F1! Resetting patience.
+📚 Epoch 4/20 🔍 Dev Slot-F1: 0.9629 Accuracy: 0.9920✅ New best F1! Resetting patience.
+📚 Epoch 6/20 🔍 Dev Slot-F1: 0.9784 Accuracy: 0.9900✅ New best F1! Resetting patience.
+📚 Epoch 8/20 🔍 Dev Slot-F1: 0.9805 Accuracy: 0.9900✅ New best F1! Resetting patience.
+📚 Epoch 10/20 🔍 Dev Slot-F1: 0.9840 Accuracy: 0.9920✅ New best F1! Resetting patience.
+📚 Epoch 12/20 🔍 Dev Slot-F1: 0.9823 Accuracy: 0.9900⏳ No improvement. Patience left: 2
+📚 Epoch 14/20 🔍 Dev Slot-F1: 0.9841 Accuracy: 0.9900✅ New best F1! Resetting patience.
+📚 Epoch 16/20 🔍 Dev Slot-F1: 0.9838 Accuracy: 0.9920⏳ No improvement. Patience left: 2
+📚 Epoch 18/20 🔍 Dev Slot-F1: 0.9858 Accuracy: 0.9920✅ New best F1! Resetting patience.
+📚 Epoch 20/20 🔍 Dev Slot-F1: 0.9852 Accuracy: 0.9900⏳ No improvement. Patience left: 2
+🧪 Test F1: 0.9597, Intent Accuracy: 0.9742
+🌀 Starting run 3/3
+📚 Epoch 2/20 🔍 Dev Slot-F1: 0.8714 Accuracy: 0.9719✅ New best F1! Resetting patience.
+📚 Epoch 4/20 🔍 Dev Slot-F1: 0.9466 Accuracy: 0.9880✅ New best F1! Resetting patience.
+📚 Epoch 6/20 🔍 Dev Slot-F1: 0.9708 Accuracy: 0.9900✅ New best F1! Resetting patience.
+📚 Epoch 8/20 🔍 Dev Slot-F1: 0.9817 Accuracy: 0.9880✅ New best F1! Resetting patience.
+📚 Epoch 10/20 🔍 Dev Slot-F1: 0.9749 Accuracy: 0.9920⏳ No improvement. Patience left: 2
+📚 Epoch 12/20 🔍 Dev Slot-F1: 0.9826 Accuracy: 0.9900✅ New best F1! Resetting patience.
+📚 Epoch 14/20 🔍 Dev Slot-F1: 0.9814 Accuracy: 0.9960⏳ No improvement. Patience left: 2
+📚 Epoch 16/20 🔍 Dev Slot-F1: 0.9832 Accuracy: 0.9920✅ New best F1! Resetting patience.
+📚 Epoch 18/20 🔍 Dev Slot-F1: 0.9832 Accuracy: 0.9920✅ New best F1! Resetting patience.
+📚 Epoch 20/20 🔍 Dev Slot-F1: 0.9850 Accuracy: 0.9940✅ New best F1! Resetting patience.
+🧪 Test F1: 0.9580, Intent Accuracy: 0.9776
+=== 🏁 Experiment 2/16 ===
+Config: {'model_name': 'bert-large-uncased', 'n_epochs': 20, 'clip': 1, 'runs': 3, 'patience': 3, 'cutoff': 0, 'batch_size_train': 16, 'batch_size_eval': 32, 'lr': 1e-05, 'dropout': 0.2}

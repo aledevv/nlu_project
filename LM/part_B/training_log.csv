@@ -1,23 +1,23 @@
-Model ID, Hidden Size, Embedding Size, Learning Rate, Gradient Clip, Epochs, Patience, Dev PPL               , Final PPL                   , Notes
-       3,         400,            400,           3.0,             5,    100,        3, 150.90990460748435    ,           138.56423431980903, vanilla
-       4,         400,            400,           2.0,             5,    100,        3, 145.37687611526005    ,           139.170820988466  , vanilla
-       5,         400,            400,           1.0,             5,    100,        3, 151.12573542317256    ,           142.09770569607292, vanilla
-       6,         400,            400,           0.5,             5,    100,        3, 154.32626123200262    ,           149.27629827135382, vanilla
-       7,         400,            400,           3.0,             5,    100,        3, 126.64411953780528    ,           124.30187671404269, "WT Weight Tying,"
-       8,         400,            400,           2.0,             5,    100,        3, 128.18967037467414    ,           122.6350186054918 , "WT Weight Tying," [BEST]
-       9,         400,            400,           1.0,             5,    100,        3, 128.45849541619415    ,           124.18349715415023, "WT Weight Tying,"
-      10,         400,            400,           0.5,             5,    100,        3, 129.5365636214628     ,           125.73464110601611, "WT Weight Tying,"
-      11,         400,            400,           3.0,             5,    100,        3, 101.09539660067925    ,            97.8897922466831 , "WT+VD Weight Tying, Variational Dropout," [BEST]
-      12,         400,            400,           2.0,             5,    100,        3, 101.63322722811596    ,            99.12352109281484, "WT+VD Weight Tying, Variational Dropout,"
-      13,         400,            400,           1.0,             5,    100,        3, 103.87676409213039    ,           101.58563846879458, "WT+VD Weight Tying, Variational Dropout,"
-      14,         400,            400,           0.5,             5,    100,        3, 114.01626980238322    ,           109.99700817434571, "WT+VD Weight Tying, Variational Dropout,"
-      15,         400,            400,           3.0,             5,    100,        3, 100.09326995322681    ,            96.34227579153445, "WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD,"
-      16,         400,            400,           2.0,             5,    100,        3, 100.45851395624445    ,            97.28962276069369, "WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD,"
-      17,         400,            400,           1.0,             5,    100,        3, 104.76670494966454    ,           102.3106891308675 , "WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD,"
-      18,         400,            400,           0.5,             5,    100,        3, 114.8104007045942     ,           111.46285806452248, "WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD,"
-      19,         300,            400,           3.0,             5,    100,        3, 110.09838907780606    ,           106.31436188780172, "WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD,"
-      20,         600,            600,           3.0,             5,    100,        3, 102.84341001235684    ,            99.42696285323514, "WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD,"
-      21,         300,            512,           3.0,             5,    100,        3, 121.60232088164466    ,           107.64824343237842, "WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD,"
-      22,         512,            300,           3.0,             5,    100,        3, 2.2281430546642081e+18, 2693417126774.0103          , "WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD,"
-      23,         400,            400,           3.0,             5,    100,        3, 96.88683187271171     ,            94.3721097621092 , "WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD," [BEST]
-      24,         400,            400,           3.0,             5,    100,        3, 102.46132677119957    ,            99.35185547363702, "WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD,"
+Model ID, Hidden Size, Embedding Size, Learning Rate, Batch training, Gradient Clip, Epochs, Patience, Dev PPL               , Final PPL                   , Notes
+       3,         400,            400,           3.0,    64,         5,    100,        3, 150.90990460748435    ,           138.56423431980903, vanilla
+       4,         400,            400,           2.0,    64,         5,    100,        3, 145.37687611526005    ,           139.170820988466  , vanilla
+       5,         400,            400,           1.0,    64,         5,    100,        3, 151.12573542317256    ,           142.09770569607292, vanilla
+       6,         400,            400,           0.5,    64,         5,    100,        3, 154.32626123200262    ,           149.27629827135382, vanilla
+       7,         400,            400,           3.0,    64,         5,    100,        3, 126.64411953780528    ,           124.30187671404269, "WT Weight Tying,"
+       8,         400,            400,           2.0,    64,         5,    100,        3, 128.18967037467414    ,           122.6350186054918 , "WT Weight Tying," [BEST WT]
+       9,         400,            400,           1.0,    64,         5,    100,        3, 128.45849541619415    ,           124.18349715415023, "WT Weight Tying,"
+      10,         400,            400,           0.5,    64,         5,    100,        3, 129.5365636214628     ,           125.73464110601611, "WT Weight Tying,"
+      11,         400,            400,           3.0,    64,         5,    100,        3, 101.09539660067925    ,            97.8897922466831 , "WT+VD Weight Tying, Variational Dropout," [BEST WT+VD]
+      12,         400,            400,           2.0,    64,         5,    100,        3, 101.63322722811596    ,            99.12352109281484, "WT+VD Weight Tying, Variational Dropout,"
+      13,         400,            400,           1.0,    64,         5,    100,        3, 103.87676409213039    ,           101.58563846879458, "WT+VD Weight Tying, Variational Dropout,"
+      14,         400,            400,           0.5,    64,         5,    100,        3, 114.01626980238322    ,           109.99700817434571, "WT+VD Weight Tying, Variational Dropout,"
+      15,         400,            400,           3.0,    64,         5,    100,        3, 100.09326995322681    ,            96.34227579153445, "WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD,"
+      16,         400,            400,           2.0,    64,         5,    100,        3, 100.45851395624445    ,            97.28962276069369, "WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD,"
+      17,         400,            400,           1.0,    64,         5,    100,        3, 104.76670494966454    ,           102.3106891308675 , "WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD,"
+      18,         400,            400,           0.5,    64,         5,    100,        3, 114.8104007045942     ,           111.46285806452248, "WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD,"
+      19,         300,            400,           3.0,    64,         5,    100,        3, 110.09838907780606    ,           106.31436188780172, "WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD,"
+      20,         600,            600,           3.0,    64,         5,    100,        3, 102.84341001235684    ,            99.42696285323514, "WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD,"
+      21,         300,            512,           3.0,    64,         5,    100,        3, 121.60232088164466    ,           107.64824343237842, "WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD,"
+      22,         512,            300,           3.0,    64,         5,    100,        3, 2.2281430546642081e+18, 2693417126774.0103          , "WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD,"
+      23,         400,            400,           3.0,    32,         5,    100,        3, 96.88683187271171     ,            94.3721097621092 , "WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD," [BEST WT+VD+NT]
+      24,         400,            400,           3.0,   128,         5,    100,        3, 102.46132677119957    ,            99.35185547363702, "WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD,"
