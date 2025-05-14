@@ -4,10 +4,10 @@ Model ID, Hidden Size, Embedding Size, Learning Rate, Gradient Clip, Epochs, Pat
        5,         400,            400,           1.0,             5,    100,        3, 151.12573542317256    ,           142.09770569607292, vanilla
        6,         400,            400,           0.5,             5,    100,        3, 154.32626123200262    ,           149.27629827135382, vanilla
        7,         400,            400,           3.0,             5,    100,        3, 126.64411953780528    ,           124.30187671404269, "WT Weight Tying,"
-       8,         400,            400,           2.0,             5,    100,        3, 128.18967037467414    ,           122.6350186054918 , "WT Weight Tying,"
+       8,         400,            400,           2.0,             5,    100,        3, 128.18967037467414    ,           122.6350186054918 , "WT Weight Tying," [BEST]
        9,         400,            400,           1.0,             5,    100,        3, 128.45849541619415    ,           124.18349715415023, "WT Weight Tying,"
       10,         400,            400,           0.5,             5,    100,        3, 129.5365636214628     ,           125.73464110601611, "WT Weight Tying,"
-      11,         400,            400,           3.0,             5,    100,        3, 101.09539660067925    ,            97.8897922466831 , "WT+VD Weight Tying, Variational Dropout,"
+      11,         400,            400,           3.0,             5,    100,        3, 101.09539660067925    ,            97.8897922466831 , "WT+VD Weight Tying, Variational Dropout," [BEST]
       12,         400,            400,           2.0,             5,    100,        3, 101.63322722811596    ,            99.12352109281484, "WT+VD Weight Tying, Variational Dropout,"
       13,         400,            400,           1.0,             5,    100,        3, 103.87676409213039    ,           101.58563846879458, "WT+VD Weight Tying, Variational Dropout,"
       14,         400,            400,           0.5,             5,    100,        3, 114.01626980238322    ,           109.99700817434571, "WT+VD Weight Tying, Variational Dropout,"
@@ -19,5 +19,5 @@ Model ID, Hidden Size, Embedding Size, Learning Rate, Gradient Clip, Epochs, Pat
       20,         600,            600,           3.0,             5,    100,        3, 102.84341001235684    ,            99.42696285323514, "WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD,"
       21,         300,            512,           3.0,             5,    100,        3, 121.60232088164466    ,           107.64824343237842, "WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD,"
       22,         512,            300,           3.0,             5,    100,        3, 2.2281430546642081e+18, 2693417126774.0103          , "WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD,"
-      23,         400,            400,           3.0,             5,    100,        3, 96.88683187271171     ,            94.3721097621092 , "WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD,"
+      23,         400,            400,           3.0,             5,    100,        3, 96.88683187271171     ,            94.3721097621092 , "WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD," [BEST]
       24,         400,            400,           3.0,             5,    100,        3, 102.46132677119957    ,            99.35185547363702, "WT+VD+NT Weight Tying, Variational Dropout, Non-monotonically Triggered AvSGD,"

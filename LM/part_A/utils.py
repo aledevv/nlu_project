@@ -126,7 +126,7 @@ def collate_fn(data, pad_token):
 
 # * TO SAVE THE MODEL AFTER THE EVALUATION
 
-save_dir = "bin"
+save_dir = "models"
 
 # Fancy selection menu
 def menu(stdscr):
@@ -182,12 +182,17 @@ def want_to_save_model(model):
 
 # * TO STORE LOG (configuration and performance of each training)
 
-def save_log_csv(model_id=0, hidden_size=None, emb_size=None, learning_rate=None, clip=None, epochs=0, patience=0, dev_ppl=0, final_ppl=0, log_file='training_log_drop.csv'):
+def save_log_csv(model_id=0, hidden_size=None, emb_size=None, learning_rate=None, clip=None, epochs=0, patience=0, dev_ppl=0, final_ppl=0, log_file='training_log_vanilla.csv'):
     # Definisce i nomi delle colonne
     fieldnames = ['Model ID', 'Hidden Size', 'Embedding Size', 'Learning Rate', 'Gradient Clip', 'Epochs', 'Patience', 'Dev PPL', 'Final PPL']
 
     # Verifica se il file esiste già
     file_exists = os.path.exists(log_file)
+    if not file_exists:
+        # Se il file non esiste, crea un nuovo file CSV e scrivi l'intestazione
+        with open(log_file, mode='w', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
 
     # Dati da salvare
     log_entry = {
