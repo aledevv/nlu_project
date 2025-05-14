@@ -14,7 +14,7 @@ class LM_LSTM(nn.Module):
         
         self.dopout1 = nn.Dropout(emb_dropout)
         # Pytorch's RNN layer: https://pytorch.org/docs/stable/generated/torch.nn.RNN.html
-        self.lstm = nn.LSTM(emb_size, hidden_size, n_layers, bidirectional=False, batch_first=True)
+        self.lstm = nn.RNN(emb_size, hidden_size, n_layers, bidirectional=False, batch_first=True)
         self.pad_token = pad_index
         # Linear layer to project the hidden layer to our output space
         self.dopout2 = nn.Dropout(out_dropout)
@@ -22,8 +22,8 @@ class LM_LSTM(nn.Module):
 
     def forward(self, input_sequence):
         emb = self.embedding(input_sequence)
-        drop_out = self.dopout1(emb)
-        rnn_out, _  = self.lstm(drop_out)
-        drop_out2 = self.dopout2(rnn_out)
-        output = self.output(drop_out2).permute(0,2,1)
+        #drop_out = self.dopout1(emb)
+        rnn_out, _  = self.lstm(emb)
+        #drop_out2 = self.dopout2(rnn_out)
+        output = self.output(rnn_out).permute(0,2,1)
         return output

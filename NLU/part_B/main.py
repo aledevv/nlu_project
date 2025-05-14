@@ -28,8 +28,8 @@ param_grid = {
 }
 
 batch_configs = [
-    {'batch_size_train': 64, 'batch_size_eval': 128},
-    {'batch_size_train': 32, 'batch_size_eval': 64},
+    #{'batch_size_train': 64, 'batch_size_eval': 128},
+    #{'batch_size_train': 32, 'batch_size_eval': 64},
     {'batch_size_train': 16, 'batch_size_eval': 32},
 ]
 

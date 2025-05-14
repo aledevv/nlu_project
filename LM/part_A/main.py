@@ -20,7 +20,7 @@ DEBUG = False
 hid_size = 400 #! MODIFY # default (400)
 emb_size = 300 #! MODIFY # default (300)
 
-lr = 0.1 #! MODIFY
+lr = 1 #! MODIFY
 clip = 5 # Clip the gradient #? MODIFY (5)
 n_epochs = 100
 patience_init = 3 #? (3)
