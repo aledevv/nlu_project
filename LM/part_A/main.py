@@ -10,8 +10,8 @@ from model import LM_LSTM
 
 DEBUG = False
 
-USE_ADAM = False
-USE_DROPOUT = False
+USE_ADAM = True
+USE_DROPOUT = True
 
 # Grid di valori da testare
 hid_sizes = [400]
@@ -24,7 +24,7 @@ batch_sizes = [16, 32, 64]
 n_epochs = 100
 patience_init = 3
 
-log_file_name = "training_log_vanilla.csv"
+log_file_name = "training_log_dropout.csv"
 
 # Dati
 train_raw = read_file("../dataset/PennTreeBank/ptb.train.txt")
@@ -38,11 +38,15 @@ vocab_len = len(lang.word2id)
 best_ppl = float('inf')
 best_config = None
 
+if USE_ADAM:
+    lrs = lrs_adam
+
 i=0
 total_combinations = len(hid_sizes) * len(emb_sizes) * len(lrs) * len(clips) * len(batch_sizes)
 
 for hid_size, emb_size, lr, clip, training_batch_size in itertools.product(hid_sizes, emb_sizes, lrs, clips, batch_sizes):
     print(f"\n🔍 Testing config {i}/{total_combinations}: hid={hid_size}, emb={emb_size}, lr={lr}, clip={clip}, batch={training_batch_size}")
+    i+=1
     
     train_dataset = PennTreeBank(train_raw, lang)
     dev_dataset = PennTreeBank(dev_raw, lang)
